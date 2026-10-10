@@ -59,14 +59,14 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 **Acceptance:**
 - Polyline of hourly temperature for the next 12 h on a dotted grid, hour ticks beneath
 - Current-hour marker and labelled peak value
-**Status:** Not started
+**Status:** Done 2026-10-10 — trace drawn, previewed (typical, worst across midnight, dry, no data) and on the board
 
 ### F-006 Rain probability meter
 **Priority:** Must
 **Acceptance:**
 - 12-segment VU-style meter of the maximum precipitation probability over the next 12 h (filled = probability reached)
 - Advisory box beneath: `UMBRELLA ADVISED` when max probability ≥ 50 % or any hourly precipitation ≥ 0.5 mm, else a rotating neutral line (F-015)
-**Status:** Not started
+**Status:** Done 2026-10-10 except the rotating neutral line, which is F-015: until then the box reads `NO UMBRELLA NEEDED`
 
 ### F-007 Footer status line
 **Priority:** Must

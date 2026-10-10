@@ -39,8 +39,10 @@
 #include "ui/Frame.h"
 #include "ui/Indoor.h"
 #include "ui/Outdoor.h"
+#include "ui/RainMeter.h"
 #include "ui/Readouts.h"
 #include "ui/TestCard.h"
+#include "ui/Trace.h"
 
 namespace {
 
@@ -144,6 +146,8 @@ void redraw() {
   ui::draw_outdoor(g, state);
   ui::draw_indoor(g, state);
   ui::draw_readouts(g, state);
+  ui::draw_trace(g, state);
+  ui::draw_rain_meter(g, state);
   panel.end_frame();
   Serial.printf("redraw %lu: send %lu us\n", static_cast<unsigned long>(redraw_count),
                 static_cast<unsigned long>(panel.last_send_us()));

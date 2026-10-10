@@ -177,6 +177,35 @@ Content area x 272–393, y 38–198; left/right padding 3 px (x 275–390). Sev
 
 Without a forecast every value shows `--` (times `--:--`). The worst case (`NW 118`, `140`, `100 %`, `1035▲`, `11 EXTREME`) fits.
 
+### Temperature trace (`ui/Trace`, F-005)
+
+Region x 6–255, y 200–278.
+
+| Element | Position | Notes |
+|---|---|---|
+| Title `TEMP · NEXT 12 H` | x 9, baseline 211 | `6x12_tf` |
+| Points | 13 (current hour + 12), x = 12 + 19·i (12 … 240) | from `DerivedModel::first_hour` |
+| Grid | a dot at every point column, rows 218, 226 … 258 | — |
+| Curve | 2 px polyline, scaled min→max into y 255…226 | flat data sits mid-band |
+| Peak | hollow 7×7 square on the highest point; value above it (`17°`), clamped inside the region | `6x12_tf` |
+| Now pointer | ▲ under the plot (y 260–264) at now's fraction of the first hour; only with a valid clock | — |
+| Hour labels | local hour `HH` centred under each point, baseline 274 | `6x12_tf` |
+
+Fewer than 2 points: `NO FORECAST` centred on a cleared patch over the grid.
+
+### Rain meter and advisory (`ui/RainMeter`, F-006)
+
+Region x 256–393, y 200–278; padding 3 px (x 259–390).
+
+| Element | Position | Notes |
+|---|---|---|
+| Title `RAIN PROB.` | right-aligned at 390, baseline 211 | `6x12_tf` |
+| Meter | 12 cells, 10×20 px, 1 px gaps, from x 259, y 217; filled to `rain_segments` | 12 h maximum probability |
+| Scale | `0` left, `100` right (`5x7`); the reading (`60 %`) centred (`6x12`), baseline ~247 | `-- %` without data |
+| Advisory box | x 259, y 252, 132×23 | `UMBRELLA ADVISED` inverted in `7x14B`; otherwise `NO UMBRELLA NEEDED` outlined in `6x12`; `NO FORECAST` without data |
+
+The neutral line is fixed until F-015 adds the rotating one-liners. Its wording follows the umbrella rule: at, say, 40 % "no rain expected" would be wrong, but "no umbrella needed" is what the rule actually decides.
+
 ## Open-Meteo request
 
 Endpoint: `https://api.open-meteo.com/v1/forecast`

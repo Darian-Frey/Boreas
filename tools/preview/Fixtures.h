@@ -95,6 +95,16 @@ inline PanelState worst() {
   return s;
 }
 
+// Dry afternoon: 20 % rain, mainly clear, neutral advisory, steady pressure.
+inline PanelState dry() {
+  PanelState s = typical();
+  WeatherModel& w = s.weather;
+  w.current.weather_code = 1;
+  detail::fill_hourly(w, s.now_utc, 14.0f, 3.0f, 20);
+  detail::finish(s, 1009.4f);
+  return s;
+}
+
 // No trusted time yet: clock shows dashes.
 inline PanelState unset() {
   PanelState s = typical();
@@ -113,6 +123,6 @@ struct Named {
   PanelState (*make)();
 };
 
-constexpr Named kAll[] = {{"typical", typical}, {"worst", worst}, {"unset", unset}};
+constexpr Named kAll[] = {{"typical", typical}, {"worst", worst}, {"dry", dry}, {"unset", unset}};
 
 }  // namespace fixtures

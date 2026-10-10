@@ -58,7 +58,7 @@ void draw_readouts(u8g2_t* g, const PanelState& s) {
     const int16_t top = static_cast<int16_t>(kFirstRowTop + i * kRowStep);
     const int16_t baseline = static_cast<int16_t>(top + kBaselineOffset);
     u8g2_DrawStr(g, kLeft, baseline, labels[i]);
-    const int16_t value_right = static_cast<int16_t>(i == kPressRow ? kRight - kArrowSlot : kRight);
+    const int16_t value_right = static_cast<int16_t>(i == kPressRow && ok ? kRight - kArrowSlot : kRight);
     draw_right(g, value_right, baseline, values[i]);
     for (int16_t x = kLeft; x <= kRight; x += 3) u8g2_DrawPixel(g, x, top + kLeaderOffset);
 
