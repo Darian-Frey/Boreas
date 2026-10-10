@@ -28,7 +28,7 @@ Phases are append-only. Mark Complete with an ISO date.
 - [ ] `src/data/` — Open-Meteo client with JSON filter; `WeatherModel` struct; stale/retry logic. Client, filter, validation and `WeatherModel` done 2026-10-10; retry runs in the scaffold. Stale flag and `app/Scheduler` still to do
 - [x] `src/sensors/` — SHTC3 reader, derived values (dew point, Δ, comfort band); battery ADC. Readers done 2026-10-10 (SHTC3, battery, RTC with the D-015 rule; host tests for date maths and gauge). Derived values done 2026-10-10 in `src/data/Derived` + `PressureHistory` (20 host tests; checked against the live forecast on the board)
 - [ ] `src/ui/` — layout engine on U8g2: frame, columns, trace, meter, footer; icon set
-- [ ] Host preview build (D-016): `ui/` + U8g2 C core → PNG from fake `PanelState` fixtures, including AV-007 worst cases; generated reference committed to `design/` (closes BUG-001)
+- [ ] Host preview build (D-016): `ui/` + U8g2 C core → PNG from fake `PanelState` fixtures, including AV-007 worst cases; generated reference committed to `design/` (closes BUG-001). Harness done 2026-10-10: `pio run -e preview`, test-card scene, hash identical on host and board (`025ad6cf`). Fixtures and the reference image come with the layout
 - [ ] Scheduler: 1-minute redraw tick, 30/15-minute fetch tick, 6-hour NTP tick
 - [ ] 72-hour soak on USB with serial logging; no reboot, no heap creep (AV-002)
 **Acceptance:** All Must features pass their acceptance criteria; soak log clean; a photograph of the panel matching the `design/` mockup within reason.

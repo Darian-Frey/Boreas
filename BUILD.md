@@ -114,7 +114,14 @@ pio device monitor                                # 115200 baud, Ctrl-C to exit
 
 **Bring-up test:** `pio run -e bringup -t upload && pio device monitor` — expect `RTC OK`, `SHTC3 OK T=.. RH=..`, `BATT x.xx V`, an `I2C:` line listing the addresses found, `KEY DOWN`/`KEY UP` (and `BOOT …`, `LOC …`) as you press each button, and a test card on the panel that drops into LPM after 2 s.
 
-**Fake-data layout work:** `pio run -t upload -e boreas --build-flag=-DBOREAS_FAKE_DATA=1` skips Wi-Fi and renders a canned model — fastest on-device loop for UI work. Faster still, without the board: the host preview build (D-016) renders the real `ui/` code to PNG. The command is added when `ui/` lands in Phase 1.
+**Fake-data layout work:** `pio run -t upload -e boreas --build-flag=-DBOREAS_FAKE_DATA=1` skips Wi-Fi and renders a canned model — fastest on-device loop for UI work. Faster still, without the board: the host preview (D-016) renders the real `ui/` code with the real fonts to PNG:
+
+```bash
+pio run -e preview
+.pio/build/preview/program --scene test --scale 2 -o preview.png   # --rlcd for panel-like grey
+```
+
+It prints a hash of the canvas. The board prints the same hash for the same scene (`preview check:` on serial at boot while the scaffold is in place), which proves the two builds draw identical pixels. Verified 2026-10-10: `025ad6cf` on both.
 
 ## 5. Tests
 

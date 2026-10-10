@@ -22,6 +22,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - F-008 memory criterion reworded: the 40 KB limit applies to the JSON parse. The whole verified-TLS fetch peaks at about 55 KB, recorded in SPEC.md, and must return heap to its pre-fetch level.
 - D-017: TLS verified with the core's built-in CA bundle from the first fetch; supersedes D-011.
 - `src/data/Derived` and `PressureHistory`: dew point, Δ, comfort, meters, WMO text and icons with night variants, compass, UV band, 12 h outlook and umbrella rule, trace extremes, stale flag; time-based 3 h pressure trend instead of the 6-slot ring. Host tests in `test/test_derived`; native env now compiles `src/data/`.
+- Host preview harness (D-016): `display/MemCanvas` (RAM canvas on U8g2's C core, pixel hash), `ui/TestCard`, `tools/preview` (scene → PNG, no image library), `[env:preview]`. `St7305Panel::raw()` exposes the C API. Host and board hashes match (`025ad6cf`).
 - `include/locations.example.h`: forecast location template. The real location lives in the git-ignored `include/locations.h`.
 ### Changed
 - Project retargeted from Raspberry Pi Zero WH + Inky pHAT to the Waveshare ESP32-S3-RLCD-4.2 (D-001).

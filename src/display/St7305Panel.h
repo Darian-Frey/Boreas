@@ -20,6 +20,10 @@ class St7305Panel {
   // only touches RAM; nothing reaches the panel until end_frame().
   U8G2& canvas();
 
+  // The same canvas through U8g2's C API. ui/ draws through this so the
+  // identical code builds for the host preview (D-016).
+  u8g2_t* raw();
+
   // Sends the buffer: HPM (0x38) -> sendBuffer() -> hold -> LPM (0x39).
   // Blocks for the hold (kHpmHoldMs), so the panel is always in LPM on
   // return; safe to sleep straight after.

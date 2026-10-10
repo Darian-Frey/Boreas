@@ -33,6 +33,8 @@ void St7305Panel::begin() {
 
 U8G2& St7305Panel::canvas() { return u8g2; }
 
+u8g2_t* St7305Panel::raw() { return u8g2.getU8g2(); }
+
 void St7305Panel::end_frame() {
   u8g2.sendF("c", kCmdHighPowerMode);
   uint32_t t0 = micros();

@@ -23,6 +23,7 @@
 #include "data/Derived.h"
 #include "data/Models.h"
 #include "data/PressureHistory.h"
+#include "display/MemCanvas.h"
 #include "display/St7305Panel.h"
 #include "net/Backoff.h"
 #include "net/MeteoClient.h"
@@ -34,6 +35,7 @@
 #include "sensors/CivilTime.h"
 #include "sensors/Rtc.h"
 #include "sensors/Shtc3.h"
+#include "ui/TestCard.h"
 
 namespace {
 
@@ -243,6 +245,17 @@ void setup() {
   wifi.begin(secrets::kWifiSsid, secrets::kWifiPassword);
 
   panel.begin();
+
+  // D-016 proof: the same scene drawn into a MemCanvas must hash exactly as
+  // the host preview does; the panel shows it for comparison with the PNG.
+  {
+    static MemCanvas check;
+    ui::draw_test_card(check.u8g2());
+    Serial.printf("preview check: scene test hash %08lx\n", static_cast<unsigned long>(check.hash()));
+    ui::draw_test_card(panel.raw());
+    panel.end_frame();
+    delay(10000);
+  }
   redraw();
   last_redraw_ms = millis();
 }

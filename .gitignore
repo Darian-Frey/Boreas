@@ -10,7 +10,8 @@
 include/secrets.h
 include/locations.h
 
-# Host tools
+# Host tools (preview output defaults to ./preview.png)
+preview*.png
 __pycache__/
 *.pyc
 
