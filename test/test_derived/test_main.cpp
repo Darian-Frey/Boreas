@@ -132,6 +132,17 @@ void test_stale() {
   TEST_ASSERT_TRUE(derived::is_stale(w, kNoon, 1800));
 }
 
+void test_wifi_bars() {
+  TEST_ASSERT_EQUAL_UINT8(4, derived::wifi_bars(-40));
+  TEST_ASSERT_EQUAL_UINT8(4, derived::wifi_bars(-55));
+  TEST_ASSERT_EQUAL_UINT8(3, derived::wifi_bars(-56));
+  TEST_ASSERT_EQUAL_UINT8(3, derived::wifi_bars(-67));
+  TEST_ASSERT_EQUAL_UINT8(2, derived::wifi_bars(-75));
+  TEST_ASSERT_EQUAL_UINT8(1, derived::wifi_bars(-85));
+  TEST_ASSERT_EQUAL_UINT8(0, derived::wifi_bars(-86));
+  TEST_ASSERT_EQUAL_UINT8(0, derived::wifi_bars(0));  // no reading
+}
+
 // ---------------------------------------------------------------- PressureHistory
 
 void test_pressure_trend() {
@@ -294,6 +305,7 @@ int main() {
   RUN_TEST(test_uv_band);
   RUN_TEST(test_meter_segments);
   RUN_TEST(test_stale);
+  RUN_TEST(test_wifi_bars);
   RUN_TEST(test_pressure_trend);
   RUN_TEST(test_pressure_needs_three_hours);
   RUN_TEST(test_pressure_mixed_intervals_and_duplicates);

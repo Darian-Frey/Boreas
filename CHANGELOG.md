@@ -29,6 +29,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - `ui/Indoor` (INT column, F-003): temperature, humidity, 10-cell RH meter with the 30–60 % band bracket, Δ in/out and dew point, comfort box (inverted when out of band). Δ and arrow symbols moved to `ui/Icons` (test-card hash unchanged).
 - `ui/Readouts` (READOUTS column, F-004): wind, gust, humidity, pressure with a drawn trend arrow, UV band, sunrise and sunset. `DerivedModel::today` picks the current local day's row (also used for night detection). Preview fixtures carry pressure history.
 - `ui/Trace` (F-005: 13-point curve, grid, labelled peak, now pointer, hour labels) and `ui/RainMeter` (F-006: 12-cell meter, scale, advisory box inverted for `UMBRELLA ADVISED`, otherwise `NO UMBRELLA NEEDED` until F-015). `dry` preview fixture; no-data states for both.
+- `ui/Footer` (F-007): last and next fetch, RTC state, Wi-Fi bars (`derived::wifi_bars`, tested), battery gauge and voltage; inverted `!! STALE` bar naming the cause. Main page complete. `stale` preview fixture.
 - `include/locations.example.h`: forecast location template. The real location lives in the git-ignored `include/locations.h`.
 ### Changed
 - Project retargeted from Raspberry Pi Zero WH + Inky pHAT to the Waveshare ESP32-S3-RLCD-4.2 (D-001).

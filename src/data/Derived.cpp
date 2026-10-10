@@ -106,6 +106,15 @@ uint8_t meter_segments(float pct, uint8_t segments) {
   return static_cast<uint8_t>(std::lround(pct * segments / 100.0f));
 }
 
+uint8_t wifi_bars(int8_t rssi_dbm) {
+  if (rssi_dbm >= 0) return 0;  // 0 means "no reading"
+  if (rssi_dbm >= -55) return 4;
+  if (rssi_dbm >= -67) return 3;
+  if (rssi_dbm >= -75) return 2;
+  if (rssi_dbm >= -85) return 1;
+  return 0;
+}
+
 bool is_stale(const WeatherModel& w, time_t now_utc, uint32_t fetch_interval_s) {
   if (!w.valid) return true;
   return now_utc - w.fetched_utc > static_cast<time_t>(2) * fetch_interval_s;

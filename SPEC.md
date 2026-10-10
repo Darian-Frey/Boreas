@@ -186,7 +186,7 @@ Region x 6–255, y 200–278.
 | Title `TEMP · NEXT 12 H` | x 9, baseline 211 | `6x12_tf` |
 | Points | 13 (current hour + 12), x = 12 + 19·i (12 … 240) | from `DerivedModel::first_hour` |
 | Grid | a dot at every point column, rows 218, 226 … 258 | — |
-| Curve | 2 px polyline, scaled min→max into y 255…226 | flat data sits mid-band |
+| Curve | 2 px polyline, scaled min→max into y 255…229 | flat data sits mid-band; top leaves room for the peak label under the title |
 | Peak | hollow 7×7 square on the highest point; value above it (`17°`), clamped inside the region | `6x12_tf` |
 | Now pointer | ▲ under the plot (y 260–264) at now's fraction of the first hour; only with a valid clock | — |
 | Hour labels | local hour `HH` centred under each point, baseline 274 | `6x12_tf` |
@@ -205,6 +205,18 @@ Region x 256–393, y 200–278; padding 3 px (x 259–390).
 | Advisory box | x 259, y 252, 132×23 | `UMBRELLA ADVISED` inverted in `7x14B`; otherwise `NO UMBRELLA NEEDED` outlined in `6x12`; `NO FORECAST` without data |
 
 The neutral line is fixed until F-015 adds the rotating one-liners. Its wording follows the umbrella rule: at, say, 40 % "no rain expected" would be wrong, but "no umbrella needed" is what the rule actually decides.
+
+### Footer (`ui/Footer`, F-007)
+
+Region x 6–393, y 280–293; padding 3 px (x 9–390); text in `6x12_tf`, vertically centred.
+
+| Part | Content |
+|---|---|
+| Left | `UPD 13:00 · NEXT 13:30 · RTC OK`: last successful fetch and next scheduled fetch in local time (`--:--` when unknown or the clock is untrusted); `RTC UNSET` when the RTC isn't trusted (D-015) |
+| Right, from the right edge | voltage (`3.9V`; `LOW 3.3V` below 3.4 V; `--V` without a reading) · battery gauge (outline 23×12 with a 2×4 nub, four 4×8 cells from `BatteryModel::cells`) · `BATT` · Wi-Fi bars (four 4×8 cells) · `WIFI`; 6 px between a label and its gauge, 10 px between the groups |
+| Stale | forecast exists **and** is older than 2 × the fetch interval: the whole footer inverts and the left reads `!! STALE · LINK DOWN · UPD 13:00`, or `!! STALE · FETCH FAILING · UPD …` if Wi-Fi is up. The gauges stay, drawn in white. Before the first fetch the footer is normal, with `--:--`, not stale. The rest of the panel keeps the last good data. |
+
+Wi-Fi bars from RSSI (`derived::wifi_bars`): 4 at ≥ −55 dBm, 3 at ≥ −67, 2 at ≥ −75, 1 at ≥ −85, else 0; 0 whenever the link is down. The board measured −55 to −60 dBm on the bench.
 
 ## Open-Meteo request
 

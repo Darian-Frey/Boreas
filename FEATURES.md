@@ -75,7 +75,7 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 - Wi-Fi signal as a 4-cell bar from RSSI
 - Battery as a 4-cell gauge plus voltage (from GPIO4 ADC, SPEC.md §Battery)
 - Inverted `!! STALE — LINK DOWN` when the last fetch is older than 2 × the fetch interval
-**Status:** Not started
+**Status:** Done 2026-10-10 — footer drawn, previewed (typical, stale with link down and low battery, unset) and on the board. The stale bar names the cause (`LINK DOWN` or `FETCH FAILING`) and keeps `UPD` time; there is no em dash in the font, so `·` separates the parts
 
 ### Data
 

@@ -17,6 +17,7 @@
 #include "config.h"
 #include "display/MemCanvas.h"
 #include "ui/Draw.h"
+#include "ui/Footer.h"
 #include "ui/Fonts.h"
 #include "ui/Frame.h"
 #include "ui/Icons.h"
@@ -49,6 +50,7 @@ void scene_main(u8g2_t* g, const PanelState& s) {
   ui::draw_readouts(g, s);
   ui::draw_trace(g, s);
   ui::draw_rain_meter(g, s);
+  ui::draw_footer(g, s);
 }
 
 // Every condition icon, labelled, for review.

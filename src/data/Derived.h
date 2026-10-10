@@ -68,6 +68,10 @@ uint8_t meter_segments(float pct, uint8_t segments);
 
 bool is_stale(const WeatherModel& w, time_t now_utc, uint32_t fetch_interval_s);
 
+// Wi-Fi signal bars for the footer (SPEC.md §Footer): 4 at >= -55 dBm,
+// 3 >= -67, 2 >= -75, 1 >= -85, else 0. Pass 0 bars when the link is down.
+uint8_t wifi_bars(int8_t rssi_dbm);
+
 // Everything at once. `pressure` should already contain the latest sample.
 DerivedModel derive(const WeatherModel& weather, const IndoorModel& indoor, const PressureHistory& pressure,
                     time_t now_utc, uint32_t fetch_interval_s);

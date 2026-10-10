@@ -36,6 +36,7 @@
 #include "sensors/Rtc.h"
 #include "sensors/Shtc3.h"
 #include "data/PanelState.h"
+#include "ui/Footer.h"
 #include "ui/Frame.h"
 #include "ui/Indoor.h"
 #include "ui/Outdoor.h"
@@ -148,6 +149,7 @@ void redraw() {
   ui::draw_readouts(g, state);
   ui::draw_trace(g, state);
   ui::draw_rain_meter(g, state);
+  ui::draw_footer(g, state);
   panel.end_frame();
   Serial.printf("redraw %lu: send %lu us\n", static_cast<unsigned long>(redraw_count),
                 static_cast<unsigned long>(panel.last_send_us()));

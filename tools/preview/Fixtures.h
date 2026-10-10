@@ -105,6 +105,18 @@ inline PanelState dry() {
   return s;
 }
 
+// Stale (F-007): fetched 13:00, now 15:30 with the link down, battery low.
+inline PanelState stale() {
+  PanelState s = typical();
+  s.now_utc = 1791288000 + 150 * 60;
+  s.link = Link::kDown;
+  s.rssi = 0;
+  s.next_fetch_utc = s.now_utc + 4 * 60;
+  s.battery = {true, 3.32f, 0, true, false};
+  detail::finish(s, 1010.5f);
+  return s;
+}
+
 // No trusted time yet: clock shows dashes.
 inline PanelState unset() {
   PanelState s = typical();
@@ -123,6 +135,6 @@ struct Named {
   PanelState (*make)();
 };
 
-constexpr Named kAll[] = {{"typical", typical}, {"worst", worst}, {"dry", dry}, {"unset", unset}};
+constexpr Named kAll[] = {{"typical", typical}, {"worst", worst}, {"dry", dry}, {"stale", stale}, {"unset", unset}};
 
 }  // namespace fixtures
