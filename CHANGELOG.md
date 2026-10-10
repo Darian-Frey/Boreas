@@ -23,6 +23,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - D-017: TLS verified with the core's built-in CA bundle from the first fetch; supersedes D-011.
 - `src/data/Derived` and `PressureHistory`: dew point, Δ, comfort, meters, WMO text and icons with night variants, compass, UV band, 12 h outlook and umbrella rule, trace extremes, stale flag; time-based 3 h pressure trend instead of the 6-slot ring. Host tests in `test/test_derived`; native env now compiles `src/data/`.
 - Host preview harness (D-016): `display/MemCanvas` (RAM canvas on U8g2's C core, pixel hash), `ui/TestCard`, `tools/preview` (scene → PNG, no image library), `[env:preview]`. `St7305Panel::raw()` exposes the C API. Host and board hashes match (`025ad6cf`).
+- `ui/grid.h`, `ui/Fonts.h`, `ui/Draw.h`, `ui/Frame` (border, header with location/date/clock, rules, tabs) and `data/PanelState.h`; preview fixtures and a `frame` scene; geometry tests in `test/test_layout`. SPEC.md §Layout: footer moved to y = 280 inside the border, strip 79 px, tabs inset 1 px, source labels in 5×7, font table.
 - `include/locations.example.h`: forecast location template. The real location lives in the git-ignored `include/locations.h`.
 ### Changed
 - Project retargeted from Raspberry Pi Zero WH + Inky pHAT to the Waveshare ESP32-S3-RLCD-4.2 (D-001).

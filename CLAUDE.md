@@ -14,7 +14,7 @@ Boreas MS-42: a cassette-futurism weather station on the Waveshare ESP32-S3-RLCD
 
 ## Active task
 
-**Phase 1 — live panel (mains)** (ROADMAP.md), in progress: `src/display/` and the sensor readers done; Wi-Fi/NTP and `MeteoClient` (D-017 verified TLS) done; `data/Derived` and the D-016 preview harness done (`MemCanvas`, `tools/preview`, hash-identical with the board). Next is `ui/grid.h` and the frame, then each region, then `app/` (Scheduler, single `PanelState`) to replace the scaffold. Phase 0 completed 2026-10-10. `test/bringup/` stays as the peripheral regression test (`pio run -e bringup -t upload`). Open items to settle before or early in Phase 1: the BUG-002 RTC-validity rule (needs a D-007 amendment), IMP-002 exact library pins, and where the private forecast location lives (git-ignored header; never committed). Current measurements are deferred to Phase 3 (no meter yet). The location button is a deferred nice-to-have.
+**Phase 1 — live panel (mains)** (ROADMAP.md), in progress: `src/display/` and the sensor readers done; Wi-Fi/NTP and `MeteoClient` (D-017 verified TLS) done; `data/Derived` and the D-016 preview harness done (`MemCanvas`, `tools/preview`, hash-identical with the board). `ui/grid.h`, `Fonts.h`, `Frame` and `data/PanelState.h` done; preview fixtures `typical`/`worst`/`unset` in `tools/preview/Fixtures.h` (public example data only). Next: the region drawers (outdoor, indoor, readouts, trace, rain meter, footer), then `app/` (Scheduler, single `PanelState`) to replace the scaffold. Phase 0 completed 2026-10-10. `test/bringup/` stays as the peripheral regression test (`pio run -e bringup -t upload`). Open items to settle before or early in Phase 1: the BUG-002 RTC-validity rule (needs a D-007 amendment), IMP-002 exact library pins, and where the private forecast location lives (git-ignored header; never committed). Current measurements are deferred to Phase 3 (no meter yet). The location button is a deferred nice-to-have.
 
 ## Invariants
 
@@ -33,7 +33,7 @@ Boreas MS-42: a cassette-futurism weather station on the Waveshare ESP32-S3-RLCD
 pio run -t upload && pio device monitor          # flash + serial
 pio run -e bringup -t upload                     # Phase 0 peripheral test
 pio test -e native                               # host-side unit tests
-pio run -e preview && .pio/build/preview/program --scale 2 -o preview.png  # ui/ without hardware (D-016)
+pio run -e preview && .pio/build/preview/program --scene frame --fixture worst --scale 2 -o preview.png  # ui/ without hardware (D-016)
 ```
 
 ## Conventions

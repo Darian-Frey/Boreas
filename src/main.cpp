@@ -35,6 +35,8 @@
 #include "sensors/CivilTime.h"
 #include "sensors/Rtc.h"
 #include "sensors/Shtc3.h"
+#include "data/PanelState.h"
+#include "ui/Frame.h"
 #include "ui/TestCard.h"
 
 namespace {
@@ -247,12 +249,21 @@ void setup() {
   panel.begin();
 
   // D-016 proof: the same scene drawn into a MemCanvas must hash exactly as
-  // the host preview does; the panel shows it for comparison with the PNG.
+  // the host preview does.
   {
     static MemCanvas check;
     ui::draw_test_card(check.u8g2());
     Serial.printf("preview check: scene test hash %08lx\n", static_cast<unsigned long>(check.hash()));
-    ui::draw_test_card(panel.raw());
+  }
+  // Show the real frame chrome with live state for 10 s, then the debug card.
+  {
+    PanelState s;
+    s.location_name = locations::kHome.name;
+    s.clock_valid = clock_valid;
+    s.now_utc = time(nullptr);
+    s.rtc_ok = boot_rtc.valid;
+    u8g2_ClearBuffer(panel.raw());
+    ui::draw_frame(panel.raw(), s);
     panel.end_frame();
     delay(10000);
   }

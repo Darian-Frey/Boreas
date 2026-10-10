@@ -68,7 +68,7 @@ Severity: Critical (must hold) | Major (regression on release blocks) | Minor (t
 ### AV-007 Layout clipping or overlap at real panel scale
 **Severity:** Major
 **Description.** The design mockup was drawn at 2× in a browser with web fonts; U8g2 bitmap fonts have different metrics. Numbers like `-10.5` or `100 %` may overflow their cells; dot leaders may collide with values.
-**Detection.** The host preview build (D-016) renders the real `ui/` code with U8g2's fonts and worst-case fake data (`-10.5`, `100 %`, long condition text); `test/test_layout` asserts each region's bounding box against `grid.h`; a photographic check against the mockup is a Phase 1 acceptance item.
+**Detection.** The host preview build (D-016) renders the real `ui/` code with U8g2's fonts and worst-case fake data (`-10.5`, `100 %`, long condition text); `test/test_layout` asserts the grid geometry in `grid.h` (regions inside the border, no overlaps, rules between regions); a photographic check against the mockup is a Phase 1 acceptance item.
 **Related decisions.** D-009, D-016.
 
 ### AV-008 Ghosting or contrast loss under the gel
