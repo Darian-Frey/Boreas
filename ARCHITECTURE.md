@@ -62,7 +62,7 @@ Single-core cooperative loop on the Arduino framework (`loop()` with a millis-ba
 
 ## Cross-cutting concerns
 
-- **Logging:** `Serial` at 115200 via `log.h` macros with level and module tag; `LOG_LEVEL` set in `platformio.ini`. Diagnostics page shows the last error string.
+- **Logging:** `Serial` at 115200 via `log.h` macros with level and module tag; `LOG_LEVEL` set in `platformio.ini`. Log init calls `Serial.setTxTimeoutMs(0)` so an unread USB port drops output instead of stalling `loop()` (AV-011). Diagnostics page shows the last error string.
 - **Errors:** functions return `bool` or a small `Result` enum; no exceptions (disabled in the build). Every failure sets a module-level `lastError` surfaced on the Diag page.
 - **Time:** all timestamps are `time_t` UTC internally; local conversion only in `ui/` via `localtime_r`.
 - **Concurrency:** none user-visible. Wi-Fi callbacks only set flags consumed in `loop()`.

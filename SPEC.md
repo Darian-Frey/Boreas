@@ -43,7 +43,7 @@ Authoritative technical reference. Constants here are the single source of truth
 | USB D− / D+ | 19 / 20 | native USB; also header P1-6 / P1-8 |
 | UART0 TX / RX | 43 / 44 | header P1-10 / P1-12; unused (logs go over USB CDC) |
 
-The schematic's pin table also has a QMI8658C (IMU) column on the I2C bus. Whether this board actually fits one is **[verify]**: run an I2C scan in Phase 0.
+I2C scan on the board (2026-10-10): `0x18`, `0x40`, `0x51`, `0x70`. `0x51` is the PCF85063 and `0x70` the SHTC3; `0x18` and `0x40` are the standard addresses of the ES8311 codec and ES7210 mic ADC. Nothing answers at the QMI8658C's `0x6A`/`0x6B`, so the schematic's QMI8658C column is template residue: the board has no IMU.
 
 ### Expansion header P1 (2×8, 2.54 mm, back of board)
 
@@ -67,7 +67,8 @@ Confirm every **[verify]** against the Waveshare schematic PDF (Resources page) 
 - Native geometry 300 (W) × 400 (H). Boreas uses `U8G2_R1` for 400×300 landscape. Origin top-left after rotation.
 - Framebuffer: 1 bpp, 300 × 400 / 8 = **15 000 bytes**, U8g2 full-buffer (`_F_`) constructor.
 - SPI: `SPI.begin(11, -1, 12, 40)` before `u8g2.begin()`. Clock **24 MHz** (GPIO-matrix routing caps practical SPI at ~40 MHz; ST7305 minimum write period 30 ns).
-- U8g2 ≥ 2.36.19 includes the 300×400 ST7305 constructor **[verify exact constructor name in Phase 0; expected `U8G2_ST7305_300X400_F_4W_HW_SPI`]**.
+- U8g2 constructor: `U8G2_ST7305_300X400_F_4W_HW_SPI(rotation, cs, dc, reset)`, confirmed present in U8g2 2.37.1 (commit `b3a40de`) and working on the panel (2026-10-10): `U8G2_R1` gives correct landscape orientation, all four corner pixels visible, 1 px lines and the checkerboard render cleanly.
+- The driver's init sequence sets frame rates HPM 32 Hz / LPM 1 Hz (`0xB2 0x12`), enables auto power-down, and leaves the panel in **HPM** with display on. Firmware must send `0x39` after the first frame.
 
 ### Panel modes
 
@@ -77,7 +78,7 @@ Confirm every **[verify]** against the Waveshare schematic PDF (Resources page) 
 | Low Power Mode (LPM) | `0x39` | 1 Hz | Held between redraws |
 | Display off | `0x28` (U8g2 `setPowerSave(1)`) | — | Not LPM; avoid except for shutdown |
 
-Write sequence (`St7305Panel::endFrame()`): `sendF("c", 0x38)` → `sendBuffer()` → delay ≥ 100 ms **[verify minimum]** → `sendF("c", 0x39)`. Writing while in LPM is legal but the visible update may lag by up to 1 s.
+Write sequence (`St7305Panel::endFrame()`): `sendF("c", 0x38)` → `sendBuffer()` → delay 100 ms → `sendF("c", 0x39)`. Writing while in LPM is legal but the visible update may lag by up to 1 s. Verified on the board 2026-10-10: a 100 ms HPM hold gives an instant visible update. Holds of 300–1500 ms and staying in HPM were no different. Holds shorter than 100 ms are untested.
 
 The panel **does not retain an image without power** (D-001 consequences; AV-006).
 
@@ -163,6 +164,14 @@ On fetch failure: retry after 1 min, 2 min, 4 min, 8 min, then every 15 min unti
 ## Battery
 
 `V_batt = ADC_mV × 3 / 1000` **[verify divider]**, 16-sample average, ADC attenuation 11 dB. Gauge thresholds (single Li-ion cell): 4 cells ≥ 4.0 V, 3 ≥ 3.8, 2 ≥ 3.6, 1 ≥ 3.4, 0 below; `LOW BATT` in footer below 3.4 V; graceful halt (final redraw then deep sleep) at 3.2 V. USB present if `V_batt` reads > 4.15 V while CHG is lit **[verify; no dedicated VBUS sense pin known]**.
+
+## Panel timing (measured 2026-10-10)
+
+| Item | Value |
+|---|---|
+| `sendBuffer()` at 24 MHz, full 15 000-byte frame | 21 ms |
+| `loop()` worst-case gap with a redraw (serial TX timeout 0) | 50 ms |
+| HPM hold before `0x39` that gives an instant visible update | 100 ms (shorter untested) |
 
 ## Power (to be measured in Phase 0/3)
 

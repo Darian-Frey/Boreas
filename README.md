@@ -14,8 +14,8 @@ The project began as a Raspberry Pi Zero WH + Pimoroni Inky pHAT e-ink design; t
 Assumes a Linux host with PlatformIO Core installed (see [BUILD.md](BUILD.md) for the blank-board path from unboxing).
 
 ```bash
-git clone https://github.com/Darian-Frey/boreas-ms42.git
-cd boreas-ms42
+git clone https://github.com/Darian-Frey/Boreas.git
+cd Boreas
 cp include/secrets.example.h include/secrets.h   # add Wi-Fi SSID/password
 pio run -t upload                                  # board on USB-C; hold BOOT on first flash
 pio device monitor -b 115200
@@ -27,7 +27,7 @@ The panel should show the boot splash, then the live panel within ~15 s of Wi-Fi
 
 - Linux (developed on Linux Mint); macOS/Windows untested
 - PlatformIO Core ≥ 6.1 with the **pioarduino** platform (arduino-esp32 core ≥ 3.3.0 — required for the U8g2 ST7305 driver)
-- U8g2 ≥ 2.36.19, ArduinoJson ≥ 7, SensorLib 0.3.1
+- U8g2 ≥ 2.36.19 (pinned to a GitHub commit; not yet on the PlatformIO registry), ArduinoJson ≥ 7, SensorLib 0.3.1
 - Python 3 (PlatformIO dependency; also used by `tools/`)
 
 Full detail, including the first-power-on checklist for a brand-new board, in [BUILD.md](BUILD.md).
@@ -35,7 +35,7 @@ Full detail, including the first-power-on checklist for a brand-new board, in [B
 ## Project structure
 
 ```
-boreas-ms42/
+Boreas/
 ├── src/                 # firmware (main.cpp + modules, see ARCHITECTURE.md)
 ├── include/             # headers, secrets.example.h, pins.h
 ├── lib/                 # vendored/local libraries (none yet)

@@ -4,17 +4,17 @@ Phases are append-only. Mark Complete with an ISO date.
 
 ## Phase 0 — Board bring-up
 **Goal:** Prove the brand-new board, the host toolchain and every peripheral the project needs, before writing any Boreas code.
-**Status:** Not started
+**Status:** In progress — `test/bringup` flashed and running on the board (2026-10-10)
 **Features delivered:** (none — this phase establishes the build path in BUILD.md and seeds ATTACK_VECTORS.md)
 **Deliverables:**
 - [ ] Unbox, fit 18650, first power-on; note the factory firmware behaviour (BUILD.md §First power-on)
-- [ ] Linux host sees the board on USB-C (`/dev/ttyACM0`), user in `dialout`, `brltty` conflict ruled out
-- [ ] PlatformIO + pioarduino environment compiles and uploads a blink (BUILD.md §Toolchain)
-- [ ] Waveshare `05_I2C_SHTC3` and `04_I2C_PCF85063` ported into `test/bringup/` and verified on serial
-- [ ] U8g2 ST7305 test: full-buffer draw at 400×300 landscape, HPM→LPM switch observed
+- [x] Linux host sees the board on USB-C (`/dev/ttyACM0`), user in `dialout`, `brltty` conflict ruled out (2026-10-10; board must be powered on with PWR before it enumerates)
+- [x] PlatformIO + pioarduino environment compiles and uploads (2026-10-10, `test/bringup` in place of a blink; esptool confirms ESP32-S3 rev 0.2, 16 MB flash, 8 MB PSRAM)
+- [x] Waveshare `05_I2C_SHTC3` and `04_I2C_PCF85063` ported into `test/bringup/` and verified on serial (2026-10-10; raw I2C; RTC validity caveat in BUG-002)
+- [x] U8g2 ST7305 test: full-buffer draw at 400×300 landscape, HPM→LPM switch observed (2026-10-10: orientation, corners, 1 px lines and fonts correct; 100 ms HPM hold gives instant updates; frame send 21 ms)
 - [ ] `03_ADC_Test` equivalent: battery voltage reads plausibly with and without USB
-- [ ] Button test: BOOT (GPIO0), KEY (GPIO18) and the add-on location button (GPIO17, header P1-13, if fitted) each log press and release on serial, with no spurious or bouncing events (SPEC.md §Pin map)
-- [ ] I2C scan of GPIO13/14 lists 0x51 (RTC) and 0x70 (SHTC3); note any other addresses, e.g. a QMI8658C, in SPEC.md
+- [ ] Button test: BOOT (GPIO0), KEY (GPIO18) and the add-on location button (GPIO17, header P1-13, if fitted) each log press and release on serial, with no spurious or bouncing events (SPEC.md §Pin map). BOOT and KEY passed 2026-10-10 (3 and 5 presses, no bounce); location button not yet fitted
+- [x] I2C scan of GPIO13/14 lists 0x51 (RTC) and 0x70 (SHTC3); note any other addresses, e.g. a QMI8658C, in SPEC.md (2026-10-10: also 0x18, 0x40; no QMI8658C)
 - [ ] Measured current draw: idle in LPM, during fetch, during redraw — recorded in SPEC.md §Power
 **Acceptance:** `pio run -t upload` of `test/bringup` shows all peripherals passing on serial and a test pattern held on the panel in LPM.
 

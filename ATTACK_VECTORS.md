@@ -22,6 +22,13 @@ Severity: Critical (must hold) | Major (regression on release blocks) | Minor (t
 **Related decisions.** D-005.
 **Related features.** F-008 (JSON filter), F-011.
 
+### AV-011 Serial logging stalls the loop when no host is reading
+**Severity:** Major
+**Description.** With USB plugged into a computer but no serial monitor open, the ESP32-S3's USB CDC port is "connected" but nothing drains it. Once its TX buffer fills, each `Serial` write blocks for the core's default 100 ms TX timeout. A few log lines per event stall `loop()` for most of a second, so button presses are missed and redraws lag. It looks like a panel or debounce bug, and it disappears as soon as a monitor is opened.
+**Detection.** `Serial.setTxTimeoutMs(0)` immediately after `Serial.begin()` (in `log.h` init for the firmware), so log output is dropped rather than waited on. The bring-up test reports `LOOP max gap` every 10 s: it measured 751 ms with the port unread before the fix and 50 ms after.
+**Related features.** F-013 (KEY), F-011.
+**History.** Found 2026-10-10 in Phase 0: the KEY count missed most fast presses on the bench with no monitor open, and updates appeared about 1 s late. The lag looked like AV-006 (writing in LPM), but it was this stall delaying the press detection. With the fix, every HPM hold from 100 ms up gave instant updates.
+
 ## Network and data
 
 ### AV-003 Fetch hammering on failure

@@ -26,6 +26,15 @@ Severity vocabulary: low | medium | high.
 **Reproduction.** Open `design/panel-mockup.png` beside SPEC.md §Layout.
 **Notes.** Fix by redrawing the mockup on the SPEC grid, or replace it with a `tools/preview.py` render once that exists (IMP-003). If the redraw shows SPEC is the one that's wrong, update SPEC.md §Layout and close this entry.
 
+### BUG-002: Oscillator-stop flag clear does not mean the RTC time is valid
+**Status:** open
+**Found:** 2026-10-10 (Phase 0 bring-up, first run of `test/bringup`)
+**Location:** cross-cutting: D-007, F-009, AV-005; future `src/sensors/` RTC reader
+**Severity:** medium
+**Description.** The new board's PCF85063 read `2026-01-05 14:32` on 2026-10-10 with the oscillator-stop (OS) flag clear. D-007 and F-009 treat "OS flag clear" as "RTC OK". By that rule the footer would show `RTC OK` beside a clock that's nine months wrong, and on a boot with no Wi-Fi the panel would show that wrong time and date with no warning.
+**Reproduction.** Fresh board, no NTP sync yet: flash `test/bringup` and read the `RTC` line.
+**Notes.** Possible rules, each needing a D-007 amendment: (a) also require the year to be at least the firmware build year/month; (b) keep a "set by NTP" marker in the PCF85063's spare RAM byte (register 0x03) and only report `RTC OK` when it's present and the OS flag is clear; (c) both. Option (b) also survives battery swaps if the backup cell is fitted. The bring-up test only resets the RTC when the OS flag is set, so it left the stale time alone.
+
 ## Fixed
 
 _None._

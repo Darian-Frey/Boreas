@@ -28,6 +28,16 @@ sudo usermod -aG dialout $USER     # then log out and back in
 sudo apt remove brltty
 ```
 
+Install PlatformIO's udev rules (removes the upload warning and gives non-root access to the board):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/system/99-platformio-udev.rules \
+  | sudo tee /etc/udev/rules.d/99-platformio-udev.rules
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+Group changes need a fresh login session. Until then, uploads fail with `Permission denied` even though `getent group dialout` lists you.
+
 Plug in; `ls /dev/ttyACM*` should show the board (usually `/dev/ttyACM0`). `dmesg | tail` shows "Espressif USB JTAG/serial debug unit".
 
 ### 3.2 PlatformIO Core
@@ -61,8 +71,10 @@ build_flags =
   -DBOREAS_LOG_LEVEL=3
   -Wall -Wextra
 
+; U8g2 >= 2.36.19 (ST7305 300x400) is not on the PlatformIO registry
+; (latest there is 2.36.18), so it is pinned to a GitHub commit (2.37.1).
 lib_deps =
-  olikraus/U8g2 @ ^2.36.19
+  https://github.com/olikraus/U8g2_Arduino.git#b3a40de8822187c941b40cbbaaa77604a7ab90c7
   bblanchon/ArduinoJson @ ^7.3.0
   lewisxhe/SensorLib @ 0.3.1
 
@@ -71,7 +83,7 @@ extends = env:boreas
 build_src_filter = +<../test/bringup/>
 ```
 
-Pin exact versions (not `^`) once Phase 0 confirms a working set — AV-001.
+Pin exact versions (not `^`) once Phase 0 confirms a working set — AV-001. U8g2 is already pinned to a commit, because the PlatformIO registry stops at 2.36.18, which predates the ST7305 300×400 driver. `platformio.ini` in the repository root is the live copy; this one is for reference.
 
 ### 3.4 Arduino IDE fallback (for Waveshare's stock demos)
 
@@ -119,6 +131,7 @@ None; PlatformIO fetches the Xtensa toolchain.
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | No `/dev/ttyACM0` | not in `dialout`; brltty; bad cable (power-only) | §3.1; try another cable |
+| No `/dev/ttyACM0` and nothing new in `lsusb` (not even a descriptor error in `journalctl -k`) | board switched off: with the 18650 fitted, USB only charges until PWR is clicked | click PWR; if still absent, hold BOOT and click PWR to force download mode |
 | `A fatal error occurred: Failed to connect` | not in download mode | hold BOOT while powering on |
 | Compiles but panel stays blank | wrong U8g2 constructor/rotation, `SPI.begin` pins not called before `u8g2.begin()`, or official `espressif32` platform (2.x core) picked up | check `platformio.ini` platform URL; AV-001 |
 | Panel updates a second late | written while in LPM | `endFrame()` must switch to HPM first (SPEC.md §Panel modes) |
