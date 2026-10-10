@@ -22,6 +22,7 @@
 #include "ui/Icons.h"
 #include "ui/Indoor.h"
 #include "ui/Outdoor.h"
+#include "ui/Readouts.h"
 #include "ui/TestCard.h"
 
 namespace {
@@ -43,6 +44,7 @@ void scene_main(u8g2_t* g, const PanelState& s) {
   ui::draw_frame(g, s);
   ui::draw_outdoor(g, s);
   ui::draw_indoor(g, s);
+  ui::draw_readouts(g, s);
 }
 
 // Every condition icon, labelled, for review.

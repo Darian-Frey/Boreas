@@ -189,6 +189,7 @@ void test_derive_day_values() {
   TEST_ASSERT_TRUE(d.weather_valid);
   TEST_ASSERT_FALSE(d.stale);
   TEST_ASSERT_FALSE(d.is_night);
+  TEST_ASSERT_EQUAL_UINT8(0, d.today);
   TEST_ASSERT_EQUAL_STRING("LIGHT RAIN", d.condition);
   TEST_ASSERT_EQUAL(Icon::kRain, d.icon);
   TEST_ASSERT_EQUAL_STRING("SW", d.wind_compass);
@@ -223,6 +224,7 @@ void test_derive_after_midnight_uses_tomorrow_row() {
   const DerivedModel d = derived::derive(w, make_indoor(20, 45), p, t, 1800);
   TEST_ASSERT_FALSE(d.is_night);
   TEST_ASSERT_EQUAL(Icon::kSunCloud, d.icon);
+  TEST_ASSERT_EQUAL_UINT8(1, d.today);  // sunrise/sunset come from tomorrow's row now
 }
 
 void test_derive_skips_past_hours() {

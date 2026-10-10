@@ -25,8 +25,12 @@ inline void fill_hourly(WeatherModel& w, time_t now, float t0, float rise, uint8
   }
 }
 
-inline void finish(PanelState& s) {
+// prior_hpa > 0 adds a pressure sample 3 h before current.time, so the
+// trend arrow shows (SPEC.md §Derived values).
+inline void finish(PanelState& s, float prior_hpa = 0.0f) {
   PressureHistory p;
+  if (prior_hpa > 0.0f) p.add(s.weather.current.time - 3 * 3600, prior_hpa);
+  if (s.weather.valid) p.add(s.weather.current.time, s.weather.current.pressure_hpa);
   s.derived = derived::derive(s.weather, s.indoor, p, s.now_utc, 1800);
 }
 
@@ -56,7 +60,7 @@ inline PanelState typical() {
 
   s.indoor = {true, 21.4f, 48.0f, 21.4f};
   s.battery = {true, 3.9f, 3, false, false};
-  detail::finish(s);
+  detail::finish(s, 1010.5f);  // falling: the mockup's 1009 with a down arrow
   return s;
 }
 
@@ -81,7 +85,13 @@ inline PanelState worst() {
   w.daily[0].sunset = 1790789000;  // already set: night
   detail::fill_hourly(w, s.now_utc, -24.6f, 6.0f, 100);
   s.indoor = {true, 35.9f, 100.0f, 35.9f};  // HUMID: inverted box, full meter, +60.5 delta
-  detail::finish(s);
+  w.current.wind_kmh = 118.0f;   // readouts worst case: NW 118, gust 140, 100 %, 1035 rising, UV 11 EXTREME
+  w.current.wind_dir_deg = 315;
+  w.current.gust_kmh = 140.0f;
+  w.current.rh = 100;
+  w.current.pressure_hpa = 1035.0f;
+  w.current.uv = 11.0f;
+  detail::finish(s, 1030.0f);
   return s;
 }
 

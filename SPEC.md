@@ -162,6 +162,21 @@ Content area x 151–270, y 38–198; left/right padding 3 px (x 154–267).
 
 A failed sensor shows `--.-`, `--`, an empty meter and `COMFORT · ---`. The worst case (35.9 °C, 100 %, `+60.5°`) fits.
 
+### READOUTS column (`ui/Readouts`, F-004)
+
+Content area x 272–393, y 38–198; left/right padding 3 px (x 275–390). Seven rows, 23 px apart from y 38. Each row has its label left and value right-aligned on baseline row top + 15, with a dotted leader (every 3 px) at row top + 19. Labels and values in `7x14B_tr`.
+
+| Row | Value | Notes |
+|---|---|---|
+| `WIND` | `SW 18` | 8-point compass + km/h, rounded |
+| `GUST` | `31` | km/h |
+| `HUM` | `84 %` | outdoor RH |
+| `PRESS` | `1009` + trend | value right-aligned 11 px short of the edge; drawn ▲ / ▼ / ─ in the slot, blank while the trend is unknown (first ~3 h after boot) |
+| `UV` | `2 LOW` | rounded index + band |
+| `RISE` / `SET` | `07:10` / `18:26` | local time, from today's daily row (`DerivedModel::today`, so correct after midnight) |
+
+Without a forecast every value shows `--` (times `--:--`). The worst case (`NW 118`, `140`, `100 %`, `1035▲`, `11 EXTREME`) fits.
+
 ## Open-Meteo request
 
 Endpoint: `https://api.open-meteo.com/v1/forecast`

@@ -39,6 +39,7 @@
 #include "ui/Frame.h"
 #include "ui/Indoor.h"
 #include "ui/Outdoor.h"
+#include "ui/Readouts.h"
 #include "ui/TestCard.h"
 
 namespace {
@@ -142,6 +143,7 @@ void redraw() {
   ui::draw_frame(g, state);
   ui::draw_outdoor(g, state);
   ui::draw_indoor(g, state);
+  ui::draw_readouts(g, state);
   panel.end_frame();
   Serial.printf("redraw %lu: send %lu us\n", static_cast<unsigned long>(redraw_count),
                 static_cast<unsigned long>(panel.last_send_us()));

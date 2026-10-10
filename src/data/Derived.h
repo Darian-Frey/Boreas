@@ -25,6 +25,7 @@ struct DerivedModel {
   bool weather_valid = false;  // a forecast has been fetched at least once
   bool stale = true;           // older than 2x the fetch interval (F-007)
   bool is_night = false;       // outside today's sunrise-sunset
+  uint8_t today = 0;           // index into WeatherModel::daily for the current local day
   const char* condition = "";  // e.g. "LIGHT RAIN"; static string
   Icon icon = Icon::kNone;
   const char* wind_compass = "";  // 8-point, e.g. "SW"

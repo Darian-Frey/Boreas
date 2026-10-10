@@ -140,6 +140,7 @@ DerivedModel derive(const WeatherModel& w, const IndoorModel& in, const Pressure
   int today = 0;
   for (int i = 0; i < w.daily_count; ++i)
     if (w.daily[i].date <= now_utc) today = i;
+  d.today = static_cast<uint8_t>(today);
   const DailyForecast& day = w.daily[today];
   d.is_night = now_utc < day.sunrise || now_utc >= day.sunset;
   const Icon icon = day_icon(c.weather_code);

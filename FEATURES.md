@@ -52,7 +52,7 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 **Acceptance:**
 - Wind speed and compass direction, gust, outdoor humidity, pressure with trend arrow, UV index with band label, sunrise and sunset
 - Dot-leader rows; values right-aligned
-**Status:** Not started
+**Status:** Done 2026-10-10 — column drawn, previewed (typical, worst, no data) and on the board
 
 ### F-005 Twelve-hour temperature trace
 **Priority:** Must

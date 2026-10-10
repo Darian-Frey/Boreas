@@ -13,6 +13,7 @@ inline const uint8_t* const kClock = u8g2_font_9x15B_tr;     // header clock
 inline const uint8_t* const kLabel = u8g2_font_6x12_tf;      // tabs, labels, values (has ° ·)
 inline const uint8_t* const kSource = u8g2_font_5x7_tr;      // small tab source labels
 inline const uint8_t* const kSmall = u8g2_font_profont11_tr; // footer
+inline const uint8_t* const kReadout = u8g2_font_7x14B_tr;   // READOUTS labels and values
 inline const uint8_t* const kHero = u8g2_font_logisoso50_tn;   // outdoor temperature, >= 48 px (F-002), digits only
 inline const uint8_t* const kIndoor = u8g2_font_logisoso24_tn; // indoor values (digits only)
 
