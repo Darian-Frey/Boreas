@@ -15,5 +15,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - Project named Boreas MS-42.
 - U8g2 pinned to a GitHub commit (2.37.1); the PlatformIO registry stops at 2.36.18, before the ST7305 300×400 driver (AV-001).
 - SPEC.md: pin map rebuilt from the Waveshare schematic; expansion header P1 documented; GPIO17 reserved for an add-on location button; I2C scan, panel driver, and the 100 ms HPM hold verified on the board.
+- Phase 0 (board bring-up) complete. Current measurements deferred to Phase 3; the location button deferred as a nice-to-have.
 ### Fixed
 - README clone URL and folder name now match the `Darian-Frey/Boreas` repository.

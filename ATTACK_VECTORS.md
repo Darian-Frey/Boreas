@@ -42,7 +42,7 @@ Severity: Critical (must hold) | Major (regression on release blocks) | Minor (t
 **Description.** The SHTC3 sits on the same PCB as the ESP32, the charger and the panel driver. Indoor temperature may read 1–3 °C high, worse while charging or during Wi-Fi bursts, and humidity correspondingly low.
 **Detection.** Phase 0: compare against a reference thermometer at rest, while charging and after a fetch; record the offsets in SPEC.md and apply a calibration constant if stable. Diagnostics page shows raw and corrected values.
 **Related features.** F-003.
-**History.** Anticipated 2026-10-10 from board layout; not yet measured.
+**History.** Anticipated 2026-10-10 from board layout. First comparison 2026-10-10: the SHTC3 read 26.0–26.4 °C on USB (charging, panel redrawing every 10 s) against a room thermometer at 25.4 °C, about +0.6 to +1.0 °C. One sample only; not yet a calibration constant. Repeat on battery, at rest, and after a Wi-Fi fetch in Phase 1.
 
 ### AV-005 RTC drift or reset
 **Severity:** Minor

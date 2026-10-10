@@ -163,7 +163,7 @@ On fetch failure: retry after 1 min, 2 min, 4 min, 8 min, then every 15 min unti
 
 ## Battery
 
-`V_batt = ADC_mV × 3 / 1000` **[verify divider]**, 16-sample average, ADC attenuation 11 dB. Gauge thresholds (single Li-ion cell): 4 cells ≥ 4.0 V, 3 ≥ 3.8, 2 ≥ 3.6, 1 ≥ 3.4, 0 below; `LOW BATT` in footer below 3.4 V; graceful halt (final redraw then deep sleep) at 3.2 V. USB present if `V_batt` reads > 4.15 V while CHG is lit **[verify; no dedicated VBUS sense pin known]**.
+`V_batt = ADC_mV × 3 / 1000` **[verify divider against a multimeter; readings so far plausible: 3.97 V on battery, 4.12–4.14 V charging]**, 16-sample average, ADC attenuation 11 dB. Gauge thresholds (single Li-ion cell): 4 cells ≥ 4.0 V, 3 ≥ 3.8, 2 ≥ 3.6, 1 ≥ 3.4, 0 below; `LOW BATT` in footer below 3.4 V; graceful halt (final redraw then deep sleep) at 3.2 V. USB present if `V_batt` reads > 4.15 V while CHG is lit **[verify; no dedicated VBUS sense pin known]**.
 
 ## Panel timing (measured 2026-10-10)
 
