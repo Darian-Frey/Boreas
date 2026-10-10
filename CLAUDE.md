@@ -6,7 +6,7 @@ Boreas MS-42: a cassette-futurism weather station on the Waveshare ESP32-S3-RLCD
 
 ## Current state
 
-- **Firmware started.** `src/display/St7305Panel` and the `src/sensors/` readers (`Shtc3`, `Battery`, `Rtc`) run on the board; `pio test -e native` runs host tests (`test/test_sensors`). `src/main.cpp` is a temporary scaffold that reads the sensors and redraws a placeholder card every 60 s until `app/` and `ui/` exist. `test/bringup/` remains the peripheral regression test.
+- **Firmware started.** `src/display/St7305Panel`, the `src/sensors/` readers (`Shtc3`, `Battery`, `Rtc`) and `src/net/` (`WiFiMgr`, `NtpSync`, `Backoff`) run on the board; `pio test -e native` runs host tests (`test/test_sensors`, `test/test_net`). `src/main.cpp` is a temporary scaffold (sensors, Wi-Fi, NTP, placeholder card redrawn every 60 s and on change) until `app/` and `ui/` exist. Building needs `include/secrets.h`; the build stops with a clear `#error` if it is missing. `test/bringup/` remains the peripheral regression test.
 - `design/` — `panel-mockup.png` (4× scale; known to disagree with SPEC.md §Layout, BUG-001, so SPEC wins). Enclosure concept not yet added.
 - `platformio.ini` — live; U8g2 pinned to a GitHub commit because the registry lacks ≥ 2.36.19.
 - Hardware — board on the bench; Phase 0 bring-up complete (2026-10-10).
@@ -14,7 +14,7 @@ Boreas MS-42: a cassette-futurism weather station on the Waveshare ESP32-S3-RLCD
 
 ## Active task
 
-**Phase 1 — live panel (mains)** (ROADMAP.md), in progress: `src/display/` and the sensor readers done; next is `src/net/` (Wi-Fi, NTP → `Rtc::set_from_ntp()`). Phase 0 completed 2026-10-10. `test/bringup/` stays as the peripheral regression test (`pio run -e bringup -t upload`). Open items to settle before or early in Phase 1: the BUG-002 RTC-validity rule (needs a D-007 amendment), IMP-002 exact library pins, and where the private forecast location lives (git-ignored header; never committed). Current measurements are deferred to Phase 3 (no meter yet). The location button is a deferred nice-to-have.
+**Phase 1 — live panel (mains)** (ROADMAP.md), in progress: `src/display/` and the sensor readers done; Wi-Fi/NTP done; next is `MeteoClient` (Open-Meteo fetch into `WeatherModel`, D-011 TLS choice pending). Phase 0 completed 2026-10-10. `test/bringup/` stays as the peripheral regression test (`pio run -e bringup -t upload`). Open items to settle before or early in Phase 1: the BUG-002 RTC-validity rule (needs a D-007 amendment), IMP-002 exact library pins, and where the private forecast location lives (git-ignored header; never committed). Current measurements are deferred to Phase 3 (no meter yet). The location button is a deferred nice-to-have.
 
 ## Invariants
 

@@ -23,6 +23,15 @@ Effort vocabulary: trivial | small | medium | large.
 **Trade-offs.** Flash cost (small, with restricted ranges); a licence check per font; with D-016's host preview these fonts render exactly, so no preview gap. Do this only after the Phase 1 font pass shows the built-ins fall short.
 **Notes.** Depends on D-005. Record the final font set in SPEC.md §Layout.
 
+### IMP-004: Fail a Wi-Fi attempt as soon as the driver reports it, not after the 15 s timeout
+**Status:** suggested
+**Found:** 2026-10-10 (first on-board run of `src/net/WiFiMgr`)
+**Location:** `src/net/WiFiMgr.cpp` (`State::kConnecting`)
+**Effort:** small
+**Description.** After a reset, the router still held the board's old session and refused the first association. The driver logged `Association refused too many times` at 1.6 s, but `WiFiMgr` waited for its own 15 s timeout before backing off, so Wi-Fi came up at 21.8 s instead of about 7 s.
+**Proposal.** In `kConnecting`, treat `WL_CONNECT_FAILED` / `WL_NO_SSID_AVAIL` from `WiFi.status()` as an immediate failure. Check on the board first which status the driver actually reports after a refused association.
+**Trade-offs.** Saves about 15 s per reboot only. Small risk of reacting to a transient status during association, which would just retry 5 s sooner. The clock is unaffected, since the RTC shows the time meanwhile.
+
 ## Applied
 
 ### IMP-002: Pin exact library versions after Phase 0

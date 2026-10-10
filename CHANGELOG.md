@@ -16,6 +16,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - `[env:native]` with host unit tests (`test/test_sensors`: date conversion 2000–2099, battery gauge); `default_envs = boreas`.
 - BUG-003: SPEC's USB-present rule could never fire (4.12–4.14 V measured on USB). Fixed by dropping the indicator; VBUS sensing noted for Phase 3.
 - D-016: the host preview renders the real `ui/` code with U8g2 instead of a Python approximation; IMP-003 declined as superseded.
+- `src/net/`: `WiFiMgr` (polled, capped backoff 5 s → 5 min), `NtpSync` (SNTP every 6 h, writes RTC + NTP marker, logs drift), `Backoff` (shared with future fetch retries); host tests in `test/test_net`. Scaffold sets the system clock from a trusted RTC at boot (D-007).
+- IMP-004: fail Wi-Fi attempts as soon as the driver reports failure.
 - `include/locations.example.h`: forecast location template. The real location lives in the git-ignored `include/locations.h`.
 ### Changed
 - Project retargeted from Raspberry Pi Zero WH + Inky pHAT to the Waveshare ESP32-S3-RLCD-4.2 (D-001).

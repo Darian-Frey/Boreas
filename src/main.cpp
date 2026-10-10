@@ -1,15 +1,24 @@
 // Boreas MS-42 firmware entry point.
 //
-// Temporary Phase 1 scaffold: proves display/ and sensors/ on the board by
-// reading the sensors and redrawing a placeholder card once a minute. The
-// drawing here moves to ui/ and the timing to app/Scheduler as those
-// modules arrive.
+// Temporary Phase 1 scaffold: proves display/, sensors/ and net/ on the
+// board. It reads the sensors, keeps Wi-Fi and NTP running, and redraws a
+// placeholder card every minute and on any state change. The drawing here
+// moves to ui/ and the timing to app/Scheduler as those modules arrive.
 
 #include <Arduino.h>
 #include <Wire.h>
+#include <sys/time.h>
+
+#if __has_include("secrets.h")
+#include "secrets.h"
+#else
+#error "Missing include/secrets.h: copy include/secrets.example.h and add Wi-Fi credentials (D-010)"
+#endif
 
 #include "data/Models.h"
 #include "display/St7305Panel.h"
+#include "net/NtpSync.h"
+#include "net/WiFiMgr.h"
 #include "pins.h"
 #include "sensors/Battery.h"
 #include "sensors/CivilTime.h"
@@ -25,6 +34,9 @@ St7305Panel panel;
 Shtc3 shtc3(Wire);
 Rtc rtc(Wire);
 Battery battery;
+WiFiMgr wifi;
+NtpSync ntp(rtc);
+bool clock_valid = false;  // system clock set from a valid RTC or NTP
 
 IndoorModel indoor;
 BatteryModel batt;
@@ -44,7 +56,7 @@ void draw_placeholder() {
   c.drawStr(10, 20, "BOREAS MS-42");
   c.setDrawColor(1);
   c.setFont(u8g2_font_6x12_tr);
-  c.drawStr(12, 50, "PHASE 1 - DISPLAY + SENSORS");
+  c.drawStr(12, 50, "PHASE 1 - DISPLAY + SENSORS + NET");
   snprintf(line, sizeof(line), "REDRAW %lu  UPTIME %lu MIN", static_cast<unsigned long>(redraw_count),
            static_cast<unsigned long>(millis() / 60000));
   c.drawStr(12, 66, line);
@@ -72,6 +84,42 @@ void draw_placeholder() {
              t.minute);
   }
   c.drawStr(12, 138, line);
+
+  const uint32_t now_ms = millis();
+  switch (wifi.state()) {
+    case WiFiMgr::State::kConnected:
+      snprintf(line, sizeof(line), "WIFI OK  %d DBM  RECONNECTS %lu", wifi.rssi(),
+               static_cast<unsigned long>(wifi.reconnects()));
+      break;
+    case WiFiMgr::State::kConnecting:
+      snprintf(line, sizeof(line), "WIFI CONNECTING");
+      break;
+    case WiFiMgr::State::kWaiting:
+      snprintf(line, sizeof(line), "WIFI DOWN  RETRY IN %lu S",
+               static_cast<unsigned long>(wifi.retry_in_ms(now_ms) / 1000));
+      break;
+    case WiFiMgr::State::kOff:
+      snprintf(line, sizeof(line), "WIFI OFF");
+      break;
+  }
+  c.drawStr(12, 162, line);
+
+  if (ntp.synced())
+    snprintf(line, sizeof(line), "NTP OK  SYNCS %lu  RTC DRIFT %ld S", static_cast<unsigned long>(ntp.sync_count()),
+             static_cast<long>(ntp.last_drift_s()));
+  else
+    snprintf(line, sizeof(line), "NTP %s", ntp.first_sync_overdue(now_ms) ? "OVERDUE" : "WAITING");
+  c.drawStr(12, 178, line);
+
+  if (clock_valid) {
+    time_t now = time(nullptr);
+    struct tm local;
+    localtime_r(&now, &local);
+    strftime(line, sizeof(line), "LOCAL %a %d %b %H:%M %Z", &local);
+  } else {
+    snprintf(line, sizeof(line), "LOCAL --:--");
+  }
+  c.drawStr(12, 194, line);
 }
 
 void read_sensors() {
@@ -104,14 +152,40 @@ void setup() {
   battery.begin();
   Serial.printf("SHTC3 %s\n", shtc3.begin() ? "OK" : "NOT FOUND");
 
+  // D-007: show a correct clock before Wi-Fi, but only from a trusted RTC (D-015).
+  ntp.begin();
+  RtcReading boot_rtc = rtc.read();
+  if (boot_rtc.valid) {
+    struct timeval tv = {boot_rtc.utc, 0};
+    settimeofday(&tv, nullptr);
+    clock_valid = true;
+  }
+  Serial.printf("RTC at boot: %s\n", boot_rtc.valid ? "valid, system clock set" : "unset, waiting for NTP");
+
+  wifi.begin(secrets::kWifiSsid, secrets::kWifiPassword);
+
   panel.begin();
   redraw();
   last_redraw_ms = millis();
 }
 
 void loop() {
-  if (millis() - last_redraw_ms >= kRedrawIntervalMs) {
-    last_redraw_ms += kRedrawIntervalMs;
+  const uint32_t now_ms = millis();
+  const WiFiMgr::State wifi_before = wifi.state();
+  const uint32_t syncs_before = ntp.sync_count();
+
+  wifi.service(now_ms);
+  ntp.service(now_ms, wifi.connected());
+  if (ntp.synced()) clock_valid = true;
+
+  if (wifi.state() != wifi_before) {
+    Serial.printf("wifi state %d -> %d\n", static_cast<int>(wifi_before), static_cast<int>(wifi.state()));
+  }
+  // Redraw on the minute, and immediately on any data change (SPEC.md §Scheduling).
+  const bool changed = wifi.connected() != (wifi_before == WiFiMgr::State::kConnected) ||
+                       ntp.sync_count() != syncs_before;
+  if (changed || now_ms - last_redraw_ms >= kRedrawIntervalMs) {
+    last_redraw_ms = now_ms;
     redraw();
   }
   delay(10);

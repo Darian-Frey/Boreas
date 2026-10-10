@@ -3,7 +3,7 @@
 
 namespace secrets {
 
-constexpr const char* kWifiSsid = "your-ssid";
-constexpr const char* kWifiPassword = "your-password";
+constexpr const char *kWifiSsid = "YOUR_WIFI_SSID";
+constexpr const char *kWifiPassword = "YOUR_WIFI_PASSWORD";
 
-}  // namespace secrets
+} // namespace secrets

@@ -153,7 +153,8 @@ Night variants (sun → moon) chosen when current time is outside sunrise–suns
 | Redraw | 60 s, on the minute | plus immediately after any data change |
 | Sensor read | 60 s | SHTC3 one-shot: wake, normal-mode measurement (`0x7866`), sleep. The sensor sleeps between reads; the low-precision "low power" measurement mode isn't used |
 | Fetch | 30 min; 15 min while advisory active; 60 min in night mode | aligned to the clock, offset by 15 s |
-| NTP | 6 h | writes RTC on success |
+| NTP | 6 h | SNTP (`pool.ntp.org`, `time.google.com`) started once Wi-Fi is first up; lwIP re-syncs every 6 h. Each sync writes the RTC and its NTP marker (D-015) and logs RTC − NTP drift. First sync flagged overdue after 60 s of Wi-Fi with no sync |
+| Wi-Fi reconnect | 15 s per association attempt; on failure or link loss wait 5 s, then 10, 20 … capped at 5 min; reset on success | measured 2026-10-10: boot to connected 5 s; after a reset the router refused the first association and the retry connected at 21.8 s |
 | Page auto-return | 60 s | F-013 |
 | Night mode | 23:00–06:00 | F-014 |
 
