@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 ## [Unreleased]
 ### Added
 - Documentation scaffolding per the development documentation standard: README, FEATURES (F-001–F-018), ROADMAP (Phases 0–4), ARCHITECTURE, DECISIONS (D-001–D-014), SPEC, ATTACK_VECTORS (AV-001–AV-010), BUGS, IMPROVEMENTS (IMP-001–IMP-003), BUILD, CLAUDE, LICENSE.
-- Panel mockup at 4× scale (`design/panel-mockup.png`); known to disagree with SPEC.md §Layout (BUG-001).
+- Panel mockup at 4× scale (`design/panel-mockup.png`); a style reference, superseded as the layout reference by `panel-reference.png` (BUG-001).
 - `platformio.ini` (pioarduino, ESP32-S3 N16R8, `boreas` and `bringup` environments), `include/pins.h`, `include/secrets.example.h`.
 - Phase 0 bring-up test (`test/bringup/`): I2C scan, PCF85063 and SHTC3 over raw I2C, battery ADC, button press logging, U8g2 test card with tunable HPM hold, frame timing and loop-gap reporting.
 - AV-011: serial logging stalls the loop when no host reads the USB CDC port.
@@ -30,6 +30,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - `ui/Readouts` (READOUTS column, F-004): wind, gust, humidity, pressure with a drawn trend arrow, UV band, sunrise and sunset. `DerivedModel::today` picks the current local day's row (also used for night detection). Preview fixtures carry pressure history.
 - `ui/Trace` (F-005: 13-point curve, grid, labelled peak, now pointer, hour labels) and `ui/RainMeter` (F-006: 12-cell meter, scale, advisory box inverted for `UMBRELLA ADVISED`, otherwise `NO UMBRELLA NEEDED` until F-015). `dry` preview fixture; no-data states for both.
 - `ui/Footer` (F-007): last and next fetch, RTC state, Wi-Fi bars (`derived::wifi_bars`, tested), battery gauge and voltage; inverted `!! STALE` bar naming the cause. Main page complete. `stale` preview fixture.
+- `design/panel-reference.png`: the Main page rendered from the `typical` fixture, now the Phase 1 photographic reference (BUG-001 fixed). Regeneration step in BUILD.md; hash in SPEC.md.
 - `include/locations.example.h`: forecast location template. The real location lives in the git-ignored `include/locations.h`.
 ### Changed
 - Project retargeted from Raspberry Pi Zero WH + Inky pHAT to the Waveshare ESP32-S3-RLCD-4.2 (D-001).

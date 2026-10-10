@@ -123,6 +123,14 @@ pio run -e preview
 
 It prints a hash of the canvas. The board prints the same hash for the same scene (`preview check:` on serial at boot while the scaffold is in place), which proves the two builds draw identical pixels. Verified 2026-10-10: `025ad6cf` on both.
 
+Scenes: `test`, `frame`, `main`, `icons`, `feels-oneline`. Fixtures: `typical`, `worst`, `dry`, `stale`, `unset`.
+
+**Reference image:** when a change under `src/ui/` alters the Main page, regenerate the reference in the same commit and update its hash in SPEC.md §Layout:
+
+```bash
+pio run -e preview && .pio/build/preview/program --scene main --fixture typical -o design/panel-reference.png
+```
+
 ## 5. Tests
 
 ```bash

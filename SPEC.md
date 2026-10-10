@@ -84,7 +84,7 @@ The panel **does not retain an image without power** (D-001 consequences; AV-006
 
 ## Layout (400×300, `ui/grid.h`)
 
-This table is authoritative and matches `src/ui/grid.h` exactly; `test/test_layout` checks its geometry. Where `design/panel-mockup.png` disagrees, this table wins (BUG-001). All coordinates in panel pixels after rotation; `x`/`y` is the top-left, and regions are content areas *between* the 1 px rules.
+This table is authoritative and matches `src/ui/grid.h` exactly; `test/test_layout` checks its geometry. `design/panel-reference.png` is the rendered result (below). `design/panel-mockup.png` is a style reference only and disagrees in detail (BUG-001, fixed). All coordinates in panel pixels after rotation; `x`/`y` is the top-left, and regions are content areas *between* the 1 px rules.
 
 Two 1 px border lines (outer at 3, inner at 5, 1 px gap) enclose a table of 1 px rules:
 
@@ -217,6 +217,10 @@ Region x 6–393, y 280–293; padding 3 px (x 9–390); text in `6x12_tf`, vert
 | Stale | forecast exists **and** is older than 2 × the fetch interval: the whole footer inverts and the left reads `!! STALE · LINK DOWN · UPD 13:00`, or `!! STALE · FETCH FAILING · UPD …` if Wi-Fi is up. The gauges stay, drawn in white. Before the first fetch the footer is normal, with `--:--`, not stale. The rest of the panel keeps the last good data. |
 
 Wi-Fi bars from RSSI (`derived::wifi_bars`): 4 at ≥ −55 dBm, 3 at ≥ −67, 2 at ≥ −75, 1 at ≥ −85, else 0; 0 whenever the link is down. The board measured −55 to −60 dBm on the bench.
+
+### Reference image
+
+`design/panel-reference.png` (400×300, exact panel pixels) is the Main page rendered by the host preview from the `typical` fixture: the mockup's public example data, KINGS LANGLEY, TUE 06 OCT 13:30. It is the reference for the Phase 1 photograph. Current hash: `50c160a9`. Regenerate it in the same commit as any change under `src/ui/` that alters it (BUILD.md §4).
 
 ## Open-Meteo request
 

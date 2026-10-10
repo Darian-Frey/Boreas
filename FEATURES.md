@@ -25,8 +25,8 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 - Three body columns: `EXT · OUTDOOR`, `INT · INDOOR`, `READOUTS`, each with an inverted section tab
 - Bottom strip for the hourly trace and rain meter; single-line footer for status
 - Renders at 400×300 landscape (`U8G2_R1`) with no element clipped
-**Status:** In progress — frame, header, tabs and rules done and on the board (2026-10-10); regions to come
-**Notes:** Layout grid specified in SPEC.md §Layout. Reference design in `design/`.
+**Status:** Done 2026-10-10 — full Main page on the board; reference rendering in `design/panel-reference.png`
+**Notes:** Layout grid specified in SPEC.md §Layout. Reference rendering: `design/panel-reference.png`; style reference: `design/panel-mockup.png`.
 
 ### F-002 Outdoor current conditions
 **Priority:** Must
