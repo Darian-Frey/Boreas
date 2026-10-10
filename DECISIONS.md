@@ -196,7 +196,7 @@ Status vocabulary: Proposed | Accepted | Superseded by D-NNN | Deprecated.
 ### D-011 HTTPS to Open-Meteo without certificate verification
 **Decided:** 2026-10-10
 **Recorded:** 2026-10-10
-**Status:** Proposed
+**Status:** Superseded by D-017
 **Authors:** Claude (proposal; awaiting Shane's adjudication)
 **Related:** F-008, AV-003, AV-009
 
@@ -294,4 +294,25 @@ Status vocabulary: Proposed | Accepted | Superseded by D-NNN | Deprecated.
 - BUG-001 closes when the first generated reference replaces the mockup in `design/`.
 
 **Reversal conditions.** If U8g2's C core can't be built for the host without invasive patches, fall back to B and accept approximate fonts.
+
+### D-017 Verify Open-Meteo's TLS certificate with the core's built-in CA bundle
+**Decided:** 2026-10-10
+**Recorded:** 2026-10-10
+**Status:** Accepted
+**Authors:** Shane Hartley (recommended by Claude)
+**Related:** D-011 (supersedes), F-008, AV-009
+
+**Context.** D-011 proposed `setInsecure()` for Phase 1 and the certificate bundle (its option C) from Phase 2. When `MeteoClient` was written, the precompiled arduino-esp32 3.3.12 core turned out to ship the full ESP-IDF CA bundle (`CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL`). `NetworkClientSecure::useBuiltinCACertBundle()` attaches it with no build step and no embedded file. The reason to defer was gone.
+
+**Options.** As D-011: A `setInsecure()`, B pinned root CA, C CA bundle.
+
+**Decision.** Option C from the first fetch. `MeteoClient` calls `useBuiltinCACertBundle()`. `setInsecure()` is not used anywhere in the firmware.
+
+**Consequences.**
+- A spoofed forecast on a hostile network now fails the TLS handshake instead of reaching the parser. AV-009's range checks remain as the second line.
+- Certificate validity depends on the clock, so a fetch waits until the system clock is valid: from a trusted RTC (D-015) or NTP.
+- CA rotations are handled by the bundle. It's updated by bumping the pinned core (BUILD.md upgrade procedure), not per-certificate.
+- Measured on the board 2026-10-10: a verified fetch takes 0.7–0.9 s and peaks at about 55 KB of heap, mostly mbedTLS.
+
+**Reversal conditions.** If a core upgrade drops the built-in bundle, embed `x509_crt_bundle.bin` with `setCACertBundle()` rather than falling back to A.
 

@@ -82,11 +82,11 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 ### F-008 Open-Meteo forecast fetch
 **Priority:** Must
 **Acceptance:**
-- One HTTPS GET per cycle to the Open-Meteo forecast endpoint for the home location in `include/locations.h`, requesting current, hourly (next 24 h) and daily (today) fields listed in SPEC.md §Open-Meteo request
-- Parsed with an ArduinoJson filter so peak heap use stays < 40 KB
+- One HTTPS GET per cycle to the Open-Meteo forecast endpoint for the home location in `include/locations.h`, requesting current, hourly (next 24 h) and daily (today and tomorrow) fields listed in SPEC.md §Open-Meteo request
+- Parsed with an ArduinoJson filter so the JSON parse peaks below 40 KB of heap. The peak for the whole fetch, TLS included, is measured and recorded in SPEC.md (about 55 KB, 2026-10-10). Free heap returns to its pre-fetch level after each fetch (AV-002)
 - Fetch interval 30 min; 15 min when `UMBRELLA ADVISED` is active
 - Failure leaves the previous data on screen and sets the stale flag; retries with backoff (SPEC.md §Retry)
-**Status:** Not started
+**Status:** In progress — fetch, verified TLS, validation and retry working on the board (2026-10-10); the stale flag and the advisory-driven 15 min interval come with `app/Scheduler`
 
 ### F-009 Time from NTP, held by the RTC
 **Priority:** Must

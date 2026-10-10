@@ -38,4 +38,12 @@ constexpr const char* kNtpServer2 = "time.google.com";
 constexpr uint32_t kNtpIntervalMs = 6UL * 60 * 60 * 1000;  // re-sync and RTC write every 6 h
 constexpr uint32_t kNtpFirstSyncTimeoutMs = 60000;        // after Wi-Fi up, flag failure if no sync
 
+// ---- Forecast fetch (F-008, SPEC.md §Scheduling and §Retry)
+constexpr uint32_t kFetchIntervalMs = 30UL * 60 * 1000;
+constexpr uint32_t kFetchRetryInitialMs = 1UL * 60 * 1000;  // then 2, 4, 8 min
+constexpr uint32_t kFetchRetryCapMs = 15UL * 60 * 1000;     // then every 15 min
+constexpr uint32_t kHttpConnectTimeoutMs = 10000;
+constexpr uint16_t kHttpReadTimeoutMs = 10000;
+constexpr uint32_t kTlsHandshakeTimeoutS = 10;
+
 }  // namespace config

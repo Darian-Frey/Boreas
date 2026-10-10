@@ -14,11 +14,19 @@
 #else
 #error "Missing include/secrets.h: copy include/secrets.example.h and add Wi-Fi credentials (D-010)"
 #endif
+#if __has_include("locations.h")
+#include "locations.h"
+#else
+#error "Missing include/locations.h: copy include/locations.example.h and set your location"
+#endif
 
 #include "data/Models.h"
 #include "display/St7305Panel.h"
+#include "net/Backoff.h"
+#include "net/MeteoClient.h"
 #include "net/NtpSync.h"
 #include "net/WiFiMgr.h"
+#include "config.h"
 #include "pins.h"
 #include "sensors/Battery.h"
 #include "sensors/CivilTime.h"
@@ -37,6 +45,12 @@ Battery battery;
 WiFiMgr wifi;
 NtpSync ntp(rtc);
 bool clock_valid = false;  // system clock set from a valid RTC or NTP
+MeteoClient meteo_client;
+WeatherModel weather;
+MeteoClient::Result last_fetch;
+Backoff fetch_backoff(config::kFetchRetryInitialMs, config::kFetchRetryCapMs);
+uint32_t next_fetch_ms = 0;
+uint32_t fetch_count = 0;
 
 IndoorModel indoor;
 BatteryModel batt;
@@ -46,7 +60,7 @@ uint32_t redraw_count = 0;
 
 void draw_placeholder() {
   U8G2& c = panel.canvas();
-  char line[48];
+  char line[64];
   c.clearBuffer();
   c.drawFrame(3, 3, 394, 294);
   c.drawFrame(5, 5, 390, 290);
@@ -56,7 +70,7 @@ void draw_placeholder() {
   c.drawStr(10, 20, "BOREAS MS-42");
   c.setDrawColor(1);
   c.setFont(u8g2_font_6x12_tr);
-  c.drawStr(12, 50, "PHASE 1 - DISPLAY + SENSORS + NET");
+  c.drawStr(12, 50, "PHASE 1 - DISPLAY + SENSORS + NET + METEO");
   snprintf(line, sizeof(line), "REDRAW %lu  UPTIME %lu MIN", static_cast<unsigned long>(redraw_count),
            static_cast<unsigned long>(millis() / 60000));
   c.drawStr(12, 66, line);
@@ -120,6 +134,48 @@ void draw_placeholder() {
     snprintf(line, sizeof(line), "LOCAL --:--");
   }
   c.drawStr(12, 194, line);
+
+  if (weather.valid) {
+    time_t fetched = weather.fetched_utc;
+    struct tm local;
+    localtime_r(&fetched, &local);
+    snprintf(line, sizeof(line), "METEO %.1fC FEELS %.1f WMO %u @ %02d:%02d", weather.current.temp_c,
+             weather.current.feels_c, weather.current.weather_code, local.tm_hour, local.tm_min);
+  } else {
+    snprintf(line, sizeof(line), "METEO NO DATA YET");
+  }
+  c.drawStr(12, 218, line);
+  if (fetch_count == 0)
+    snprintf(line, sizeof(line), "FETCH WAITING FOR WIFI + CLOCK");
+  else if (last_fetch.ok)
+    snprintf(line, sizeof(line), "FETCH OK %lu MS  HI %.1f LO %.1f", static_cast<unsigned long>(last_fetch.elapsed_ms),
+             weather.daily[0].max_c, weather.daily[0].min_c);
+  else
+    snprintf(line, sizeof(line), "FETCH FAIL %s", last_fetch.error);
+  c.drawStr(12, 234, line);
+}
+
+// One fetch when due: Wi-Fi up and clock valid (TLS checks certificate
+// dates). 30 min after success; 1, 2, 4, 8, then 15 min after failure.
+bool service_fetch(uint32_t now_ms) {
+  if (!wifi.connected() || !clock_valid) return false;
+  if (fetch_count > 0 && static_cast<int32_t>(now_ms - next_fetch_ms) < 0) return false;
+
+  ++fetch_count;
+  const uint32_t heap_before = ESP.getFreeHeap();
+  Serial.printf("fetch %lu: home location, heap free %lu, min ever %lu, largest block %lu\n",
+                static_cast<unsigned long>(fetch_count), static_cast<unsigned long>(heap_before),
+                static_cast<unsigned long>(ESP.getMinFreeHeap()), static_cast<unsigned long>(ESP.getMaxAllocHeap()));
+  last_fetch = meteo_client.fetch(locations::kHome.latitude, locations::kHome.longitude, time(nullptr), weather);
+  const uint32_t delay_ms = last_fetch.ok ? config::kFetchIntervalMs : fetch_backoff.next();
+  if (last_fetch.ok) fetch_backoff.reset();
+  next_fetch_ms = millis() + delay_ms;
+  Serial.printf("fetch %lu: %s (http %d, %lu ms) %s | heap free %lu, min ever %lu | next in %lu s\n",
+                static_cast<unsigned long>(fetch_count), last_fetch.ok ? "OK" : "FAIL", last_fetch.http_status,
+                static_cast<unsigned long>(last_fetch.elapsed_ms), last_fetch.error,
+                static_cast<unsigned long>(ESP.getFreeHeap()), static_cast<unsigned long>(ESP.getMinFreeHeap()),
+                static_cast<unsigned long>(delay_ms / 1000));
+  return true;
 }
 
 void read_sensors() {
@@ -182,8 +238,9 @@ void loop() {
     Serial.printf("wifi state %d -> %d\n", static_cast<int>(wifi_before), static_cast<int>(wifi.state()));
   }
   // Redraw on the minute, and immediately on any data change (SPEC.md §Scheduling).
+  const bool fetched = service_fetch(now_ms);
   const bool changed = wifi.connected() != (wifi_before == WiFiMgr::State::kConnected) ||
-                       ntp.sync_count() != syncs_before;
+                       ntp.sync_count() != syncs_before || fetched;
   if (changed || now_ms - last_redraw_ms >= kRedrawIntervalMs) {
     last_redraw_ms = now_ms;
     redraw();

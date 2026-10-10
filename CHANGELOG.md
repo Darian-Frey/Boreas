@@ -18,6 +18,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - D-016: the host preview renders the real `ui/` code with U8g2 instead of a Python approximation; IMP-003 declined as superseded.
 - `src/net/`: `WiFiMgr` (polled, capped backoff 5 s → 5 min), `NtpSync` (SNTP every 6 h, writes RTC + NTP marker, logs drift), `Backoff` (shared with future fetch retries); host tests in `test/test_net`. Scaffold sets the system clock from a trusted RTC at boot (D-007).
 - IMP-004: fail Wi-Fi attempts as soon as the driver reports failure.
+- `MeteoClient` and `MeteoParse.h`: Open-Meteo fetch with `timeformat=unixtime` and `forecast_hours=24`, filtered parse, AV-009 validation that keeps the last good model on failure; `WeatherModel`; host tests with a real response fixture (`test/test_meteo`).
+- F-008 memory criterion reworded: the 40 KB limit applies to the JSON parse. The whole verified-TLS fetch peaks at about 55 KB, recorded in SPEC.md, and must return heap to its pre-fetch level.
+- D-017: TLS verified with the core's built-in CA bundle from the first fetch; supersedes D-011.
 - `include/locations.example.h`: forecast location template. The real location lives in the git-ignored `include/locations.h`.
 ### Changed
 - Project retargeted from Raspberry Pi Zero WH + Inky pHAT to the Waveshare ESP32-S3-RLCD-4.2 (D-001).

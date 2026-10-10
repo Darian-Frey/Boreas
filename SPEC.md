@@ -111,15 +111,37 @@ Query (one line in code):
 
 ```
 latitude=51.713&longitude=-0.455&timezone=Europe%2FLondon
+&timeformat=unixtime&forecast_days=2&forecast_hours=24&wind_speed_unit=kmh
 &current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,
          wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,uv_index
 &hourly=temperature_2m,precipitation_probability,precipitation,weather_code
 &daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,
        precipitation_probability_max
-&forecast_days=2&wind_speed_unit=kmh
 ```
 
-`forecast_days=2` so the 12-hour window crosses midnight. Optional `&models=ukmo_seamless` to prefer the Met Office model (D-004). ArduinoJson filter keeps only the fields above; expected body ≈ 6–8 KB, filtered document ≤ 4 KB.
+`timeformat=unixtime` returns every time as UTC epoch seconds (daily dates are local midnight), so nothing parses ISO strings. `forecast_hours=24` starts the hourly arrays at the current hour, with exactly 24 rows. `forecast_days=2` keeps tomorrow's daily row for night mode (F-014). Optional `&models=ukmo_seamless` prefers the Met Office model (D-004). Built by `meteo::build_url()` (`src/net/MeteoParse.h`).
+
+Measured 2026-10-10: body ≈ 2 KB (1 959 bytes); a verified HTTPS fetch takes 0.7–0.9 s and peaks at about 55 KB of heap (TLS dominates). Free heap returns to within 0.6 KB of its pre-fetch value.
+
+Transport (D-017): TLS verified against the core's built-in CA bundle; connect timeout 10 s, TLS handshake 10 s, read 10 s; HTTP/1.0 so the body streams straight into the parser. A fetch is attempted only with Wi-Fi up and a valid system clock.
+
+### Validation (AV-009)
+
+The ArduinoJson filter keeps only the requested fields. Every value is type-checked; a fetch fails as a whole, and the previous `WeatherModel` is kept, if any check fails:
+
+| Field | Accepted |
+|---|---|
+| temperatures (current, apparent, daily max/min, hourly) | −60 … 60 °C |
+| relative humidity, precipitation probabilities | 0 … 100 % (hourly/daily probabilities may be `null` → 0) |
+| weather codes | 0 … 99 |
+| wind speed, gusts | 0 … 400 km/h |
+| wind direction | 0 … 360° |
+| surface pressure | 850 … 1100 hPa |
+| UV index | 0 … 20 |
+| hourly precipitation | 0 … 500 mm (`null` → 0) |
+| timestamps | 2024-01-01 … 2100-01-01 |
+| hourly arrays | ≥ 12 rows, all the same length; first 24 kept |
+| daily arrays | ≥ 1 row; first 2 kept |
 
 ### WMO weather code → condition text / icon
 

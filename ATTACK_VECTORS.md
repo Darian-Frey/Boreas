@@ -34,7 +34,7 @@ Severity: Critical (must hold) | Major (regression on release blocks) | Minor (t
 ### AV-003 Fetch hammering on failure
 **Severity:** Major
 **Description.** A broken DNS or an Open-Meteo outage must not turn into a tight retry loop that drains the battery or trips Open-Meteo's fair-use limits.
-**Detection.** Retry sequence in SPEC.md §Retry; unit test on the scheduler's backoff (host-native, `test/test_scheduler`); serial log counts fetch attempts per hour.
+**Detection.** Retry sequence in SPEC.md §Retry; unit test on the backoff sequence (host-native, `test/test_net`: 1, 2, 4, 8, then 15 min); serial log numbers every fetch attempt.
 **Related decisions.** D-004, D-011.
 
 ### AV-004 SHTC3 self-heating and board-heat bias
@@ -53,8 +53,8 @@ Severity: Critical (must hold) | Major (regression on release blocks) | Minor (t
 ### AV-009 Spoofed or malformed forecast body
 **Severity:** Minor
 **Description.** With `setInsecure()` (D-011) a hostile network can serve any body; and even an honest server can change its schema. A naïve parser could crash on unexpected types or render nonsense.
-**Detection.** Every field read through ArduinoJson is type-checked with a default; out-of-range values (|T| > 60 °C, probability outside 0–100, bad timestamps) mark the fetch failed rather than rendered. Phase 2 fault injection feeds malformed JSON from a local server.
-**Related decisions.** D-011.
+**Detection.** Every field read through ArduinoJson is type-checked with a default; out-of-range values (|T| > 60 °C, probability outside 0–100, bad timestamps) mark the fetch failed rather than rendered. Bounds are in SPEC.md §Validation. Implemented in `src/net/MeteoParse.h` and covered by host tests (`test/test_meteo`: truncated JSON, wrong type, out-of-range, bad timestamp, mismatched arrays, error body, failure keeps the old model). Phase 2 fault injection still feeds malformed JSON from a local server.
+**Related decisions.** D-011 (superseded), D-017: TLS is now verified, so a hostile network can no longer inject a body. The checks remain for schema changes.
 
 ## Display and panel
 
