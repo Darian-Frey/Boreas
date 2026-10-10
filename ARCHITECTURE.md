@@ -32,7 +32,7 @@ Single-core cooperative loop on the Arduino framework (`loop()` with a millis-ba
 
 **`src/data/`** — Plain structs: `WeatherModel` (current, 24 hourly rows, today's daily row, fetch timestamp, stale flag), `IndoorModel`, `BatteryModel`, `PanelState` (the union of the above plus clock, page, Wi-Fi state). `Derived` computes dew point, Δ in/out, comfort band, advisory flag, WMO code → condition text/icon id.
 
-**`src/sensors/`** — `Shtc3` (I2C, one-shot low-power measurement every 60 s), `Battery` (ADC on GPIO4, oversampled, divider-corrected), `Rtc` (PCF85063 read/write via SensorLib).
+**`src/sensors/`** — `Shtc3` (I2C 0x70; ID check at boot; one-shot wake/measure/sleep with CRC check; applies the AV-004 offset to `temp_c`, keeps the raw value), `Battery` (ADC on GPIO4, 16-sample average, divider-corrected; `from_volts()` maps to gauge cells and LOW/HALT flags), `Rtc` (PCF85063 over raw I2C, not SensorLib; holds UTC; `read()` applies the D-015 validity rule; `set_from_ntp()` is the only writer of the NTP marker). `CivilTime.h` converts calendar fields to and from `time_t` (no `timegm()` on ESP32 newlib) and is unit-tested on the host. The sensor readers fill `IndoorModel` and `BatteryModel` in `src/data/Models.h`.
 
 **`src/app/`** — `Scheduler` fires the ticks (redraw 60 s, fetch 30/15 min, NTP 6 h, sensor 60 s) and assembles `PanelState`. `Input` debounces KEY and drives page selection with the 60 s auto-return. `Boot` runs the self-test sequence and splash.
 
@@ -40,7 +40,7 @@ Single-core cooperative loop on the Arduino framework (`loop()` with a millis-ba
 
 **`src/display/`** — `St7305Panel` wraps the `U8G2_ST7305_...` constructor, the `SPI.begin(11,-1,12,40)` prelude, rotation, and the HPM/LPM commands (`0x38`/`0x39`). It exposes `begin()` (init, then a cleared frame, ending in LPM), `canvas()` (the `U8G2&` buffer that `ui/` draws into) and `end_frame()`. `end_frame()` sends the buffer in HPM, holds 100 ms, then drops to LPM. It blocks for the hold, so the panel is always in LPM when it returns.
 
-**`include/`** — `pins.h` (every GPIO in one place), `config.h` (intervals, thresholds, night hours, timezone), `locations.h` (git-ignored; forecast location name and lat/lon, from `locations.example.h`), `secrets.h` (git-ignored; Wi-Fi credentials, from `secrets.example.h`), `version.h`.
+**`include/`** — `pins.h` (every GPIO in one place), `config.h` (thresholds, calibration offset and RTC marker now; intervals, night hours and timezone as later modules need them), `locations.h` (git-ignored; forecast location name and lat/lon, from `locations.example.h`), `secrets.h` (git-ignored; Wi-Fi credentials, from `secrets.example.h`), `version.h`.
 
 **`tools/`** — Host-side Python: `icons.py` (PNG/SVG → XBM), `preview.py` (renders the layout to PNG on the host using the same grid constants, for iterating on the design without flashing).
 

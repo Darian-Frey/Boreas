@@ -26,6 +26,15 @@ Severity vocabulary: low | medium | high.
 **Reproduction.** Open `design/panel-mockup.png` beside SPEC.md §Layout.
 **Notes.** Fix by redrawing the mockup on the SPEC grid, or replace it with a `tools/preview.py` render once that exists (IMP-003). If the redraw shows SPEC is the one that's wrong, update SPEC.md §Layout and close this entry.
 
+### BUG-003: SPEC's USB-present rule can never fire
+**Status:** open
+**Found:** 2026-10-10 (writing `src/sensors/Battery`)
+**Location:** SPEC.md §Battery; future footer/Diag battery display (F-007)
+**Severity:** low
+**Description.** SPEC.md says "USB present if `V_batt` reads > 4.15 V while CHG is lit". Measured on the board in Phase 0, `V_batt` on USB while charging is 4.12–4.14 V, so the rule never triggers. The firmware also can't see the CHG LED: there's no known GPIO for it. As written, the footer could never show mains power, and Phase 3 couldn't tell battery from mains by voltage alone.
+**Reproduction.** USB connected, cell charging: `BATT 4.12 V` on serial (bring-up or firmware scaffold).
+**Notes.** Not implemented in `Battery`, which reports volts, cells and LOW/HALT only. Options: (a) check the Waveshare schematic for a VBUS or CHG signal on a free GPIO; (b) infer USB from the native USB being enumerated (works only when plugged into a computer, not a wall charger); (c) infer from voltage *trend* (rising = charging); (d) drop the indicator. Needs a decision before F-007's footer battery display.
+
 ## Fixed
 
 ### BUG-002: Oscillator-stop flag clear does not mean the RTC time is valid
