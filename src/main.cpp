@@ -37,6 +37,7 @@
 #include "sensors/Shtc3.h"
 #include "data/PanelState.h"
 #include "ui/Frame.h"
+#include "ui/Indoor.h"
 #include "ui/Outdoor.h"
 #include "ui/TestCard.h"
 
@@ -140,6 +141,7 @@ void redraw() {
   u8g2_ClearBuffer(g);
   ui::draw_frame(g, state);
   ui::draw_outdoor(g, state);
+  ui::draw_indoor(g, state);
   panel.end_frame();
   Serial.printf("redraw %lu: send %lu us\n", static_cast<unsigned long>(redraw_count),
                 static_cast<unsigned long>(panel.last_send_us()));

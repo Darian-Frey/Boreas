@@ -80,6 +80,7 @@ inline PanelState worst() {
   w.daily[0].sunrise = 1790748000;
   w.daily[0].sunset = 1790789000;  // already set: night
   detail::fill_hourly(w, s.now_utc, -24.6f, 6.0f, 100);
+  s.indoor = {true, 35.9f, 100.0f, 35.9f};  // HUMID: inverted box, full meter, +60.5 delta
   detail::finish(s);
   return s;
 }
@@ -92,6 +93,7 @@ inline PanelState unset() {
   s.link = Link::kConnecting;
   s.weather = WeatherModel{};  // never fetched
   s.last_fetch_utc = 0;
+  s.indoor = IndoorModel{};  // sensor failed
   detail::finish(s);
   return s;
 }

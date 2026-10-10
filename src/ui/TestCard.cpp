@@ -1,22 +1,8 @@
 #include "ui/TestCard.h"
 
+#include "ui/Icons.h"
+
 namespace ui {
-
-namespace {
-
-// Δ, ▲ and ▼ are in none of the planned fonts (SPEC.md §Layout), so they
-// are drawn as shapes. Each sits in a 7x7 box whose top-left is (x, y).
-void draw_delta(u8g2_t* g, int x, int y) {
-  u8g2_DrawLine(g, x + 3, y, x, y + 6);
-  u8g2_DrawLine(g, x + 3, y, x + 6, y + 6);
-  u8g2_DrawHLine(g, x, y + 6, 7);
-}
-
-void draw_up_arrow(u8g2_t* g, int x, int y) { u8g2_DrawTriangle(g, x + 3, y, x - 1, y + 7, x + 8, y + 7); }
-
-void draw_down_arrow(u8g2_t* g, int x, int y) { u8g2_DrawTriangle(g, x - 1, y, x + 8, y, x + 3, y + 7); }
-
-}  // namespace
 
 void draw_test_card(u8g2_t* g) {
   u8g2_ClearBuffer(g);

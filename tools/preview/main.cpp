@@ -20,6 +20,7 @@
 #include "ui/Fonts.h"
 #include "ui/Frame.h"
 #include "ui/Icons.h"
+#include "ui/Indoor.h"
 #include "ui/Outdoor.h"
 #include "ui/TestCard.h"
 
@@ -41,6 +42,7 @@ void scene_main(u8g2_t* g, const PanelState& s) {
   u8g2_ClearBuffer(g);
   ui::draw_frame(g, s);
   ui::draw_outdoor(g, s);
+  ui::draw_indoor(g, s);
 }
 
 // Every condition icon, labelled, for review.

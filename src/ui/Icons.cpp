@@ -75,6 +75,16 @@ void bolt(u8g2_t* g, int16_t x, int16_t y) {
 
 }  // namespace
 
+void draw_delta(u8g2_t* g, int16_t x, int16_t y) {
+  u8g2_DrawLine(g, x + 3, y, x, y + 6);
+  u8g2_DrawLine(g, x + 3, y, x + 6, y + 6);
+  u8g2_DrawHLine(g, x, y + 6, 7);
+}
+
+void draw_up_arrow(u8g2_t* g, int16_t x, int16_t y) { u8g2_DrawTriangle(g, x + 3, y, x - 1, y + 7, x + 8, y + 7); }
+
+void draw_down_arrow(u8g2_t* g, int16_t x, int16_t y) { u8g2_DrawTriangle(g, x - 1, y, x + 8, y, x + 3, y + 7); }
+
 void draw_icon(u8g2_t* g, Icon icon, int16_t x, int16_t y) {
   // Precipitation icons put the cloud high; plain clouds sit lower.
   const int16_t px = static_cast<int16_t>(x + 5), py = static_cast<int16_t>(y + 3);

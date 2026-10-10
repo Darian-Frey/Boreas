@@ -143,6 +143,25 @@ Content area x 6–149, y 38–198 (below the tab); left/right padding 3 px.
 
 Without a forecast the temperature and values show `--`, the icon is the fallback box, and the condition reads `NO DATA`. The worst case (`-25 °C`, `-28°`, `FREEZING RAIN`) fits; see the `worst` preview fixture.
 
+### INT · INDOOR column (`ui/Indoor`, F-003)
+
+Content area x 151–270, y 38–198; left/right padding 3 px (x 154–267).
+
+| Element | Position | Font / size |
+|---|---|---|
+| `TEMP` label + value `21.4` + `°C` | baseline 64; label left, unit right-aligned at 267, value right-aligned 3 px before the unit | label/unit `6x12_tf`, value `logisoso24_tn` |
+| Dotted rule | y 69 | — |
+| `HUMID` label + value + `%` | baseline 96 | as above |
+| Dotted rule | y 101 | — |
+| `RH LEVEL` + `30·60` | baseline 112 | `6x12_tf` |
+| RH meter | 10 cells, 10×10 px, 1 px gaps, from x 156, y 116; filled up to `rh_segments` | — |
+| Comfort band bracket | under cells 4–6 (30–60 %), y 127–129 | — |
+| Dotted rule | y 133 | — |
+| `Δ IN/OUT` (drawn Δ) and `DEW`; values `+7.4°`, `9.9°` | labels baseline 145, values 158; second pair at x 214 | `6x12_tf` |
+| Comfort box | x 154, y 170, 114×22; `COMFORT · <BAND>` centred | `6x12_tf`; outlined for `NOMINAL`, **inverted** for `DRY`/`HUMID`/`COLD`/`WARM` |
+
+A failed sensor shows `--.-`, `--`, an empty meter and `COMFORT · ---`. The worst case (35.9 °C, 100 %, `+60.5°`) fits.
+
 ## Open-Meteo request
 
 Endpoint: `https://api.open-meteo.com/v1/forecast`
@@ -163,7 +182,7 @@ latitude=51.713&longitude=-0.455&timezone=Europe%2FLondon
 
 `timeformat=unixtime` returns every time as UTC epoch seconds (daily dates are local midnight), so nothing parses ISO strings. `forecast_hours=24` starts the hourly arrays at the current hour, with exactly 24 rows. `forecast_days=2` keeps tomorrow's daily row for night mode (F-014). Optional `&models=ukmo_seamless` prefers the Met Office model (D-004). Built by `meteo::build_url()` (`src/net/MeteoParse.h`).
 
-Measured 2026-10-10: body ≈ 2 KB (1 959 bytes); a verified HTTPS fetch takes 0.7–0.9 s and peaks at about 55 KB of heap (TLS dominates). Free heap returns to within 0.6 KB of its pre-fetch value.
+Measured 2026-10-10: body ≈ 2 KB (1 959 bytes); a verified HTTPS fetch takes 0.6–3.4 s (usually under 1 s) and peaks at about 55 KB of heap (TLS dominates). Free heap returns to within 0.6 KB of its pre-fetch value.
 
 Transport (D-017): TLS verified against the core's built-in CA bundle; connect timeout 10 s, TLS handshake 10 s, read 10 s; HTTP/1.0 so the body streams straight into the parser. A fetch is attempted only with Wi-Fi up and a valid system clock.
 

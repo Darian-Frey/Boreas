@@ -44,7 +44,7 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 - 10-segment humidity level meter with the 30–60 % comfort band marked
 - Δ in/out temperature line and dew point (computed, SPEC.md §Derived values)
 - `COMFORT · NOMINAL` / `DRY` / `HUMID` status box driven by the comfort band
-**Status:** Not started
+**Status:** Done 2026-10-10 — column drawn, previewed (typical, worst, sensor-failed) and on the board; out-of-band comfort is shown as an inverted box
 **Notes:** The SHTC3 sits close to the ESP32 and the charge circuit; see AV-004 for self-heating.
 
 ### F-004 Readouts column
