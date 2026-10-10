@@ -161,12 +161,18 @@ Night variants (sun → moon) chosen when current time is outside sunrise–suns
 
 ## Derived values (`data/Derived`)
 
-- **Dew point** (Magnus, outdoor or indoor): `γ = ln(RH/100) + 17.62·T/(243.12+T)`; `Td = 243.12·γ/(17.62−γ)`.
+- **Dew point** (Magnus, outdoor or indoor): `γ = ln(RH/100) + 17.62·T/(243.12+T)`; `Td = 243.12·γ/(17.62−γ)`. RH is clamped to ≥ 1 % (no `ln 0`).
 - **Δ in/out** = `T_indoor − T_outdoor`, shown with sign, one decimal.
-- **Comfort band**: RH 30–60 % and T 18–24 °C → `NOMINAL`; RH < 30 → `DRY`; RH > 60 → `HUMID`; T outside band → `COLD`/`WARM` (RH wins if both).
+- **Comfort band**: RH 30–60 % and T 18–24 °C (both inclusive) → `NOMINAL`; RH < 30 → `DRY`; RH > 60 → `HUMID`; T outside band → `COLD`/`WARM` (RH wins if both).
+- **Meters**: segments = round(percent × cells / 100), clamped 0…cells. Humidity meter 10 cells from indoor RH; rain meter 12 cells from the 12 h maximum probability.
+- **Current hour**: the first hourly row whose hour hasn't ended (`time + 3600 > now`), so data up to 2 × the fetch interval old still starts at the right hour. The **12 h outlook** (advisory, rain meter) is the 12 rows from there. The **trace** is 13 points (now + 12 h), with min, max and the peak's offset precomputed.
+- **Night**: the current time is before sunrise or at/after sunset of *today*, where today is the last daily row whose date (local midnight) is ≤ now. Night swaps sun → moon and sun-cloud → moon-cloud icons.
+- **Wind**: 8-point compass (N, NE … NW), boundaries at 22.5° steps.
+- **UV band** (WHO, shortened for the readouts column), from the rounded current UV index: 0–2 `LOW`, 3–5 `MOD`, 6–7 `HIGH`, 8–10 `V.HIGH`, ≥ 11 `EXTREME`.
+- **Condition text**: from the WMO table above, ≤ 16 characters; unknown codes show `---` with no icon.
 - **Advisory**: `UMBRELLA ADVISED` if max(precipitation_probability[next 12 h]) ≥ 50 % or any precipitation ≥ 0.5 mm; else a line from `strings.h` (F-015).
-- **Pressure trend**: compare current surface pressure with the value fetched 3 h earlier (kept in a 6-slot ring); ▲ if +1.0 hPa or more, ▼ if −1.0 or less, else ─.
-- **Stale**: `now − last_success > 2 × fetch_interval`.
+- **Pressure trend** (`data/PressureHistory`): each successful fetch stores (`current.time`, surface pressure) in a 16-slot ring. A repeat of the same `current.time` replaces the last sample; older samples are ignored. The latest sample is compared with the stored sample whose age is closest to 3 h, accepted only within 2.5–3.5 h, so it works at 15, 30 or 60 min fetch intervals. ▲ if +1.0 hPa or more, ▼ if −1.0 or less, else ─. Unknown, shown blank, until a sample in that window exists, i.e. about 3 h after boot. RAM only.
+- **Stale**: never fetched, or `now − last_success > 2 × fetch_interval` (exactly 2× is not yet stale).
 
 ## Scheduling (`config.h`)
 

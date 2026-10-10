@@ -26,7 +26,7 @@ Phases are append-only. Mark Complete with an ISO date.
 - [x] `src/display/` — `St7305Panel`: init, `canvas()`, `end_frame()` with the 100 ms HPM hold; on the board 2026-10-10 (21 ms per frame, 60 s redraw)
 - [ ] `src/net/` — Wi-Fi station with reconnect; NTP + TZ; RTC sync. Wi-Fi + NTP + RTC sync done 2026-10-10 (on the board: connect 5 s, sync 3 s later, RTC trusted at next boot, recovered from a refused association). `MeteoClient` done 2026-10-10 (verified TLS, 0.7–0.9 s per fetch, retries on the shared `Backoff`)
 - [ ] `src/data/` — Open-Meteo client with JSON filter; `WeatherModel` struct; stale/retry logic. Client, filter, validation and `WeatherModel` done 2026-10-10; retry runs in the scaffold. Stale flag and `app/Scheduler` still to do
-- [ ] `src/sensors/` — SHTC3 reader, derived values (dew point, Δ, comfort band); battery ADC. Readers done 2026-10-10 (SHTC3, battery, RTC with the D-015 rule; host tests for date maths and gauge). Derived values still to do
+- [x] `src/sensors/` — SHTC3 reader, derived values (dew point, Δ, comfort band); battery ADC. Readers done 2026-10-10 (SHTC3, battery, RTC with the D-015 rule; host tests for date maths and gauge). Derived values done 2026-10-10 in `src/data/Derived` + `PressureHistory` (20 host tests; checked against the live forecast on the board)
 - [ ] `src/ui/` — layout engine on U8g2: frame, columns, trace, meter, footer; icon set
 - [ ] Host preview build (D-016): `ui/` + U8g2 C core → PNG from fake `PanelState` fixtures, including AV-007 worst cases; generated reference committed to `design/` (closes BUG-001)
 - [ ] Scheduler: 1-minute redraw tick, 30/15-minute fetch tick, 6-hour NTP tick

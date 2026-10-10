@@ -21,6 +21,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - `MeteoClient` and `MeteoParse.h`: Open-Meteo fetch with `timeformat=unixtime` and `forecast_hours=24`, filtered parse, AV-009 validation that keeps the last good model on failure; `WeatherModel`; host tests with a real response fixture (`test/test_meteo`).
 - F-008 memory criterion reworded: the 40 KB limit applies to the JSON parse. The whole verified-TLS fetch peaks at about 55 KB, recorded in SPEC.md, and must return heap to its pre-fetch level.
 - D-017: TLS verified with the core's built-in CA bundle from the first fetch; supersedes D-011.
+- `src/data/Derived` and `PressureHistory`: dew point, Δ, comfort, meters, WMO text and icons with night variants, compass, UV band, 12 h outlook and umbrella rule, trace extremes, stale flag; time-based 3 h pressure trend instead of the 6-slot ring. Host tests in `test/test_derived`; native env now compiles `src/data/`.
 - `include/locations.example.h`: forecast location template. The real location lives in the git-ignored `include/locations.h`.
 ### Changed
 - Project retargeted from Raspberry Pi Zero WH + Inky pHAT to the Waveshare ESP32-S3-RLCD-4.2 (D-001).

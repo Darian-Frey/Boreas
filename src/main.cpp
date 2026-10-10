@@ -20,7 +20,9 @@
 #error "Missing include/locations.h: copy include/locations.example.h and set your location"
 #endif
 
+#include "data/Derived.h"
 #include "data/Models.h"
+#include "data/PressureHistory.h"
 #include "display/St7305Panel.h"
 #include "net/Backoff.h"
 #include "net/MeteoClient.h"
@@ -51,6 +53,7 @@ MeteoClient::Result last_fetch;
 Backoff fetch_backoff(config::kFetchRetryInitialMs, config::kFetchRetryCapMs);
 uint32_t next_fetch_ms = 0;
 uint32_t fetch_count = 0;
+PressureHistory pressure;
 
 IndoorModel indoor;
 BatteryModel batt;
@@ -153,6 +156,22 @@ void draw_placeholder() {
   else
     snprintf(line, sizeof(line), "FETCH FAIL %s", last_fetch.error);
   c.drawStr(12, 234, line);
+
+  const DerivedModel d = derived::derive(weather, indoor, pressure, time(nullptr), config::kFetchIntervalMs / 1000);
+  static const char* const kTrend[] = {"?", "UP", "STEADY", "DOWN"};
+  snprintf(line, sizeof(line), "%s %s%s  WIND %s  UV %s  P %s", d.condition, d.is_night ? "NIGHT" : "DAY",
+           d.stale ? " STALE" : "", d.wind_compass, d.uv_band, kTrend[static_cast<int>(d.pressure_trend)]);
+  c.drawStr(12, 250, line);
+  snprintf(line, sizeof(line), "DEW IN %.1f  D %+.1f  %s  RH %u/10  RAIN %u%% %u/12%s", d.indoor_dew_c, d.delta_c,
+           derived::comfort_text(d.comfort), d.rh_segments, d.max_prob_12h, d.rain_segments,
+           d.umbrella ? " UMBRELLA" : "");
+  c.drawStr(12, 266, line);
+  Serial.printf("derived: %s icon=%d night=%d stale=%d wind=%s uv=%s trend=%s dew_in=%.2f delta=%+.2f comfort=%s "
+                "rh_seg=%u first=%u trace=%u min=%.1f max=%.1f peak=%u rain=%u%% seg=%u umbrella=%d\n",
+                d.condition, static_cast<int>(d.icon), d.is_night, d.stale, d.wind_compass, d.uv_band,
+                kTrend[static_cast<int>(d.pressure_trend)], d.indoor_dew_c, d.delta_c, derived::comfort_text(d.comfort),
+                d.rh_segments, d.first_hour, d.trace_count, d.trace_min_c, d.trace_max_c, d.trace_peak, d.max_prob_12h,
+                d.rain_segments, d.umbrella);
 }
 
 // One fetch when due: Wi-Fi up and clock valid (TLS checks certificate
@@ -168,7 +187,10 @@ bool service_fetch(uint32_t now_ms) {
                 static_cast<unsigned long>(ESP.getMinFreeHeap()), static_cast<unsigned long>(ESP.getMaxAllocHeap()));
   last_fetch = meteo_client.fetch(locations::kHome.latitude, locations::kHome.longitude, time(nullptr), weather);
   const uint32_t delay_ms = last_fetch.ok ? config::kFetchIntervalMs : fetch_backoff.next();
-  if (last_fetch.ok) fetch_backoff.reset();
+  if (last_fetch.ok) {
+    fetch_backoff.reset();
+    pressure.add(weather.current.time, weather.current.pressure_hpa);
+  }
   next_fetch_ms = millis() + delay_ms;
   Serial.printf("fetch %lu: %s (http %d, %lu ms) %s | heap free %lu, min ever %lu | next in %lu s\n",
                 static_cast<unsigned long>(fetch_count), last_fetch.ok ? "OK" : "FAIL", last_fetch.http_status,
