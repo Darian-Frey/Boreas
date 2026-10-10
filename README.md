@@ -43,7 +43,7 @@ Boreas/
 ├── assets/              # XBM icons, font notes, mockup exports
 ├── design/              # Design-canvas exports: panel mockup, enclosure concept
 ├── enclosure/           # case CAD (Phase 4)
-├── tools/               # host-side helpers (icon converter, layout previewer)
+├── tools/               # host-side helpers (icon converter)
 ├── test/                # PlatformIO unit tests (host-native where possible)
 ├── platformio.ini
 └── *.md                 # the documents listed below

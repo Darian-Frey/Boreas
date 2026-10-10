@@ -20,17 +20,8 @@ Effort vocabulary: trivial | small | medium | large.
 **Effort:** medium
 **Description.** U8g2's built-in fonts are serviceable but none is a true 7-segment/dot-matrix pairing matching the mockup's VT323 / Share Tech Mono look. A converted BDF (e.g. a 7-segment face for the hero numerals, a 5×7 dot-matrix for labels) would land the aesthetic.
 **Proposal.** Convert chosen open-licence BDF fonts with U8g2's `bdfconv` restricted to the glyph ranges used (`0-9 . - ° % : /` and caps), commit the generated `.c` arrays under `assets/fonts/`.
-**Trade-offs.** Flash cost (small, with restricted ranges); a licence check per font; `tools/preview.py` cannot use them, widening the host/device preview gap. Do this only after the Phase 1 font pass shows the built-ins fall short.
+**Trade-offs.** Flash cost (small, with restricted ranges); a licence check per font; with D-016's host preview these fonts render exactly, so no preview gap. Do this only after the Phase 1 font pass shows the built-ins fall short.
 **Notes.** Depends on D-005. Record the final font set in SPEC.md §Layout.
-
-### IMP-003: Host-side renderer shares the real `grid.h`
-**Status:** suggested
-**Found:** 2026-10-10
-**Location:** `tools/preview.py`, `src/ui/grid.h`
-**Effort:** small
-**Description.** If `preview.py` keeps its own copy of the grid constants, it will drift from the firmware (AV-007).
-**Proposal.** Have `preview.py` parse `grid.h` (simple `constexpr int` lines) at run time rather than duplicating values; or generate both from one `grid.toml`.
-**Trade-offs.** A small parser to maintain; worth it to keep one source of truth (Maintenance Rule 5).
 
 ## Applied
 
@@ -47,7 +38,16 @@ Effort vocabulary: trivial | small | medium | large.
 
 ## Declined
 
-_None._
+### IMP-003: Host-side renderer shares the real `grid.h`
+**Status:** declined
+**Found:** 2026-10-10
+**Location:** `tools/preview.py`, `src/ui/grid.h`
+**Effort:** small
+**Description.** If `preview.py` keeps its own copy of the grid constants, it will drift from the firmware (AV-007).
+**Proposal.** Have `preview.py` parse `grid.h` (simple `constexpr int` lines) at run time rather than duplicating values; or generate both from one `grid.toml`.
+**Trade-offs.** A small parser to maintain; worth it to keep one source of truth (Maintenance Rule 5).
+**Declined.** 2026-10-10: superseded by D-016. The host preview compiles the real `src/ui/grid.h`, so there is no second copy to keep in sync.
+
 
 ## Deferred
 

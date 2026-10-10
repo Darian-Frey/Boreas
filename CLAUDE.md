@@ -14,7 +14,7 @@ Boreas MS-42: a cassette-futurism weather station on the Waveshare ESP32-S3-RLCD
 
 ## Active task
 
-**Phase 1 — live panel (mains)** (ROADMAP.md), in progress: `src/display/` and the sensor readers done; next is `src/net/` (Wi-Fi, NTP → `Rtc::set_from_ntp()`). BUG-003 (USB-present detection) needs a decision before the footer battery display. Phase 0 completed 2026-10-10. `test/bringup/` stays as the peripheral regression test (`pio run -e bringup -t upload`). Open items to settle before or early in Phase 1: the BUG-002 RTC-validity rule (needs a D-007 amendment), IMP-002 exact library pins, and where the private forecast location lives (git-ignored header; never committed). Current measurements are deferred to Phase 3 (no meter yet). The location button is a deferred nice-to-have.
+**Phase 1 — live panel (mains)** (ROADMAP.md), in progress: `src/display/` and the sensor readers done; next is `src/net/` (Wi-Fi, NTP → `Rtc::set_from_ntp()`). Phase 0 completed 2026-10-10. `test/bringup/` stays as the peripheral regression test (`pio run -e bringup -t upload`). Open items to settle before or early in Phase 1: the BUG-002 RTC-validity rule (needs a D-007 amendment), IMP-002 exact library pins, and where the private forecast location lives (git-ignored header; never committed). Current measurements are deferred to Phase 3 (no meter yet). The location button is a deferred nice-to-have.
 
 ## Invariants
 
@@ -33,7 +33,7 @@ Boreas MS-42: a cassette-futurism weather station on the Waveshare ESP32-S3-RLCD
 pio run -t upload && pio device monitor          # flash + serial
 pio run -e bringup -t upload                     # Phase 0 peripheral test
 pio test -e native                               # host-side unit tests
-python3 tools/preview.py --fake > /tmp/panel.png # layout without hardware
+# Layout without hardware: host preview build of ui/ + U8g2 → PNG (D-016); command added with ui/
 ```
 
 ## Conventions

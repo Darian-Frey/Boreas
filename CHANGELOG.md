@@ -14,7 +14,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - `src/display/St7305Panel` (Phase 1): owns the U8g2 ST7305 driver and the HPM → LPM write sequence; `src/main.cpp` scaffold redraws a placeholder every 60 s.
 - `src/sensors/` readers: `Shtc3`, `Battery`, `Rtc` (D-015 validity rule, NTP-only marker writer), `CivilTime.h`; `src/data/Models.h`; `include/config.h`.
 - `[env:native]` with host unit tests (`test/test_sensors`: date conversion 2000–2099, battery gauge); `default_envs = boreas`.
-- BUG-003: SPEC's USB-present rule can never fire (4.12–4.14 V measured on USB).
+- BUG-003: SPEC's USB-present rule could never fire (4.12–4.14 V measured on USB). Fixed by dropping the indicator; VBUS sensing noted for Phase 3.
+- D-016: the host preview renders the real `ui/` code with U8g2 instead of a Python approximation; IMP-003 declined as superseded.
 - `include/locations.example.h`: forecast location template. The real location lives in the git-ignored `include/locations.h`.
 ### Changed
 - Project retargeted from Raspberry Pi Zero WH + Inky pHAT to the Waveshare ESP32-S3-RLCD-4.2 (D-001).

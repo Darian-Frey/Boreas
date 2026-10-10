@@ -42,7 +42,7 @@ Single-core cooperative loop on the Arduino framework (`loop()` with a millis-ba
 
 **`include/`** — `pins.h` (every GPIO in one place), `config.h` (thresholds, calibration offset and RTC marker now; intervals, night hours and timezone as later modules need them), `locations.h` (git-ignored; forecast location name and lat/lon, from `locations.example.h`), `secrets.h` (git-ignored; Wi-Fi credentials, from `secrets.example.h`), `version.h`.
 
-**`tools/`** — Host-side Python: `icons.py` (PNG/SVG → XBM), `preview.py` (renders the layout to PNG on the host using the same grid constants, for iterating on the design without flashing).
+**`tools/`** — Host-side helpers: `icons.py` (PNG/SVG → XBM). **Preview** (D-016): a host-native PlatformIO build of `src/ui/` and `src/data/` plus U8g2's C core, with an in-memory display back-end, renders fake `PanelState` fixtures to PNG, pixel-identical to the panel.
 
 ## Data flow per cycle
 

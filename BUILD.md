@@ -114,7 +114,7 @@ pio device monitor                                # 115200 baud, Ctrl-C to exit
 
 **Bring-up test:** `pio run -e bringup -t upload && pio device monitor` — expect `RTC OK`, `SHTC3 OK T=.. RH=..`, `BATT x.xx V`, an `I2C:` line listing the addresses found, `KEY DOWN`/`KEY UP` (and `BOOT …`, `LOC …`) as you press each button, and a test card on the panel that drops into LPM after 2 s.
 
-**Fake-data layout work:** `pio run -t upload -e boreas --build-flag=-DBOREAS_FAKE_DATA=1` skips Wi-Fi and renders a canned model — fastest loop for UI iteration, or use `tools/preview.py` without flashing at all.
+**Fake-data layout work:** `pio run -t upload -e boreas --build-flag=-DBOREAS_FAKE_DATA=1` skips Wi-Fi and renders a canned model — fastest on-device loop for UI work. Faster still, without the board: the host preview build (D-016) renders the real `ui/` code to PNG. The command is added when `ui/` lands in Phase 1.
 
 ## 5. Tests
 

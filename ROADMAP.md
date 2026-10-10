@@ -28,6 +28,7 @@ Phases are append-only. Mark Complete with an ISO date.
 - [ ] `src/data/` — Open-Meteo client with JSON filter; `WeatherModel` struct; stale/retry logic
 - [ ] `src/sensors/` — SHTC3 reader, derived values (dew point, Δ, comfort band); battery ADC. Readers done 2026-10-10 (SHTC3, battery, RTC with the D-015 rule; host tests for date maths and gauge). Derived values still to do
 - [ ] `src/ui/` — layout engine on U8g2: frame, columns, trace, meter, footer; icon set
+- [ ] Host preview build (D-016): `ui/` + U8g2 C core → PNG from fake `PanelState` fixtures, including AV-007 worst cases; generated reference committed to `design/` (closes BUG-001)
 - [ ] Scheduler: 1-minute redraw tick, 30/15-minute fetch tick, 6-hour NTP tick
 - [ ] 72-hour soak on USB with serial logging; no reboot, no heap creep (AV-002)
 **Acceptance:** All Must features pass their acceptance criteria; soak log clean; a photograph of the panel matching the `design/` mockup within reason.
@@ -53,6 +54,7 @@ Phases are append-only. Mark Complete with an ISO date.
 - [ ] Night mode layout and schedule
 - [ ] Decision on light sleep vs deep sleep between fetches (new D- entry; depends on AV-006)
 - [ ] Low-battery warning in footer and graceful shutdown threshold
+- [ ] If power policy needs to know about mains (e.g. faster fetches on USB): add VBUS sensing with a 100 kΩ/100 kΩ divider from header P1-2 to GPIO1 (P1-7, ADC1). Firmware can't detect USB without it (BUG-003)
 **Acceptance:** ≥ 7 days measured runtime from full charge with the default schedule, or a D- entry recording why that target was revised.
 
 ## Phase 4 — The object

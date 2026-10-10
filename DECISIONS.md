@@ -270,3 +270,28 @@ Status vocabulary: Proposed | Accepted | Superseded by D-NNN | Deprecated.
 - The marker register was verified on the board in Phase 0: writes and reads back, original restored.
 
 **Reversal conditions.** If the RAM byte proves unreliable (e.g. cleared by something other than power loss), fall back to B as a secondary check alongside the OS flag.
+
+### D-016 Host preview renders the real ui/ code with U8g2, not a Python approximation
+**Decided:** 2026-10-10
+**Recorded:** 2026-10-10
+**Status:** Accepted
+**Authors:** Shane Hartley (options proposed by Claude)
+**Related:** D-001, D-005, AV-007, BUG-001, IMP-003, IMP-001
+
+**Context.** D-001 and D-005 planned `tools/preview.py`, which would redraw the grid with approximate fonts. BUG-001 showed how far a browser mockup drifts from the panel: different font metrics, clipped tabs, and glyphs (`°`, `·`, `Δ`, `▲`/`▼`) that the planned U8g2 fonts don't contain. A preview with approximate fonts would drift the same way, so it can't serve as the Phase 1 reference image.
+
+**Options.**
+- **A. Redraw the mockup on the SPEC grid.** Rejected: web fonts again; drifts with every layout change.
+- **B. `tools/preview.py` as planned.** Rejected: grid-accurate but font-approximate (D-005 consequence), and needs its own copy or parser of `grid.h` (IMP-003).
+- **C. Build the real `ui/` code and U8g2's C core for the host, with fake `PanelState` data, and write the frame buffer to a PNG.** Chosen.
+
+**Decision.** Option C: a host-native `preview` build (PlatformIO `native` platform). It compiles `src/ui/`, `src/data/` and U8g2's portable C core, swaps the SPI display back-end for an in-memory 400×300 buffer, and writes a PNG. The output is pixel-identical to the panel for the same `PanelState`. A generated reference image in `design/` replaces `panel-mockup.png` as the Phase 1 photographic reference. The mockup stays as the style reference.
+
+**Consequences.**
+- `ui/` must stay free of Arduino and hardware calls so it builds on the host. This is already an invariant (ui/ reads `PanelState`, writes pixels), and the preview build now enforces it.
+- `tools/preview.py` is not built; IMP-003 (sharing `grid.h` with it) is superseded. Custom fonts (IMP-001) no longer widen the preview gap, since the preview uses the same font arrays.
+- Worst-case strings for AV-007 (`-10.5`, `100 %`, long condition text) become fake-data fixtures rendered by the preview.
+- BUG-001 closes when the first generated reference replaces the mockup in `design/`.
+
+**Reversal conditions.** If U8g2's C core can't be built for the host without invasive patches, fall back to B and accept approximate fonts.
+
