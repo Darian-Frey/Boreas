@@ -53,7 +53,7 @@ The **pioarduino** platform (arduino-esp32 3.x) is pulled automatically by `plat
 
 ```ini
 [env:boreas]
-platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/55.03.312/platform-espressif32.zip
 board = esp32-s3-devkitc-1
 framework = arduino
 monitor_speed = 115200
@@ -75,7 +75,7 @@ build_flags =
 ; (latest there is 2.36.18), so it is pinned to a GitHub commit (2.37.1).
 lib_deps =
   https://github.com/olikraus/U8g2_Arduino.git#b3a40de8822187c941b40cbbaaa77604a7ab90c7
-  bblanchon/ArduinoJson @ ^7.3.0
+  bblanchon/ArduinoJson @ 7.4.3
   lewisxhe/SensorLib @ 0.3.1
 
 [env:bringup]
@@ -83,7 +83,7 @@ extends = env:boreas
 build_src_filter = +<../test/bringup/>
 ```
 
-Pin exact versions (not `^`) once Phase 0 confirms a working set — AV-001. U8g2 is already pinned to a commit, because the PlatformIO registry stops at 2.36.18, which predates the ST7305 300×400 driver. `platformio.ini` in the repository root is the live copy; this one is for reference.
+Every version is pinned exactly: the set verified in Phase 0 (AV-001, IMP-002) is pioarduino `55.03.312` (arduino-esp32 3.3.12), U8g2 2.37.1 at commit `b3a40de`, ArduinoJson 7.4.3 and SensorLib 0.3.1. U8g2 is pinned to a commit because the PlatformIO registry stops at 2.36.18, which predates the ST7305 300×400 driver. To upgrade, bump one entry, rebuild, and re-run `pio run -e bringup -t upload` before committing. `platformio.ini` in the repository root is the live copy; this one is for reference.
 
 ### 3.4 Arduino IDE fallback (for Waveshare's stock demos)
 
@@ -103,7 +103,8 @@ Libraries from the demo zip's `Arduino/libraries` (LVGL 8.3.11 **or** 9.3.0 — 
 ## 4. Build, flash, monitor
 
 ```bash
-cp include/secrets.example.h include/secrets.h   # edit SSID/password
+cp include/secrets.example.h include/secrets.h       # edit SSID/password
+cp include/locations.example.h include/locations.h   # set your forecast location
 pio run                                           # compile
 pio run -t upload                                 # flash
 pio device monitor                                # 115200 baud, Ctrl-C to exit

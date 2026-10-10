@@ -40,7 +40,7 @@ Single-core cooperative loop on the Arduino framework (`loop()` with a millis-ba
 
 **`src/display/`** — `St7305Panel` wraps the `U8G2_ST7305_...` constructor, the `SPI.begin(11,-1,12,40)` prelude, rotation, and the HPM/LPM commands (`0x38`/`0x39`). It exposes `beginFrame()` / `endFrame()` which bracket a buffer send with the mode switch.
 
-**`include/`** — `pins.h` (every GPIO in one place), `config.h` (lat/lon, intervals, thresholds, night hours), `secrets.h` (git-ignored; Wi-Fi credentials), `version.h`.
+**`include/`** — `pins.h` (every GPIO in one place), `config.h` (intervals, thresholds, night hours, timezone), `locations.h` (git-ignored; forecast location name and lat/lon, from `locations.example.h`), `secrets.h` (git-ignored; Wi-Fi credentials, from `secrets.example.h`), `version.h`.
 
 **`tools/`** — Host-side Python: `icons.py` (PNG/SVG → XBM), `preview.py` (renders the layout to PNG on the host using the same grid constants, for iterating on the design without flashing).
 

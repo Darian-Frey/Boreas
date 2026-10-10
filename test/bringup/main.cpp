@@ -165,6 +165,35 @@ void set_rtc_from_build() {
   Wire.endTransmission();
 }
 
+// PCF85063 register 0x03 is a free RAM byte. The firmware uses it as a
+// "set by NTP" marker (D-015), so confirm here that it holds a value.
+// The original value is restored.
+uint8_t rtc_read_reg(uint8_t reg) {
+  Wire.beginTransmission(kRtcAddr);
+  Wire.write(reg);
+  Wire.endTransmission(false);
+  Wire.requestFrom(kRtcAddr, static_cast<uint8_t>(1));
+  return Wire.available() ? Wire.read() : 0;
+}
+
+void rtc_write_reg(uint8_t reg, uint8_t v) {
+  Wire.beginTransmission(kRtcAddr);
+  Wire.write(reg);
+  Wire.write(v);
+  Wire.endTransmission();
+}
+
+void test_rtc_ram_byte() {
+  uint8_t original = rtc_read_reg(0x03);
+  bool ok = true;
+  for (uint8_t pattern : {0xA5, 0x5A}) {
+    rtc_write_reg(0x03, pattern);
+    ok = ok && rtc_read_reg(0x03) == pattern;
+  }
+  rtc_write_reg(0x03, original);
+  Serial.printf("RTC RAM byte %s (was 0x%02X, restored)\n", ok ? "OK" : "FAIL", original);
+}
+
 void report_rtc(const RtcReading& r) {
   if (!r.ok) {
     Serial.println("RTC FAIL no response");
@@ -393,6 +422,7 @@ void setup() {
   Wire.begin(pins::kI2cSda, pins::kI2cScl);
   scan_i2c();
 
+  test_rtc_ram_byte();
   RtcReading r = read_rtc();
   if (r.ok && r.osc_stopped) {
     Serial.println("RTC osc-stop flag set; loading build time " __DATE__ " " __TIME__);

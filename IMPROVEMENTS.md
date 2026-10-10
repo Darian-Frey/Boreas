@@ -23,15 +23,6 @@ Effort vocabulary: trivial | small | medium | large.
 **Trade-offs.** Flash cost (small, with restricted ranges); a licence check per font; `tools/preview.py` cannot use them, widening the host/device preview gap. Do this only after the Phase 1 font pass shows the built-ins fall short.
 **Notes.** Depends on D-005. Record the final font set in SPEC.md §Layout.
 
-### IMP-002: Pin exact library versions after Phase 0
-**Status:** suggested
-**Found:** 2026-10-10
-**Location:** `platformio.ini`
-**Effort:** trivial
-**Description.** BUILD.md's reference `lib_deps` uses caret ranges so the first build succeeds; AV-001 wants exact pins.
-**Proposal.** Once bring-up passes, replace `^` with the exact versions that worked and note them in BUILD.md.
-**Trade-offs.** Exact pins must be bumped by hand to get fixes; that is the point.
-
 ### IMP-003: Host-side renderer shares the real `grid.h`
 **Status:** suggested
 **Found:** 2026-10-10
@@ -43,7 +34,16 @@ Effort vocabulary: trivial | small | medium | large.
 
 ## Applied
 
-_None._
+### IMP-002: Pin exact library versions after Phase 0
+**Status:** applied
+**Found:** 2026-10-10
+**Location:** `platformio.ini`
+**Effort:** trivial
+**Description.** BUILD.md's reference `lib_deps` uses caret ranges so the first build succeeds; AV-001 wants exact pins.
+**Proposal.** Once bring-up passes, replace `^` with the exact versions that worked and note them in BUILD.md.
+**Trade-offs.** Exact pins must be bumped by hand to get fixes; that is the point.
+**Applied.** 2026-10-10: pioarduino release `55.03.312` instead of `stable`, ArduinoJson `7.4.3`, SensorLib `0.3.1`, U8g2 commit `b3a40de`. Bring-up re-run on the board with the pinned set; passes.
+
 
 ## Declined
 

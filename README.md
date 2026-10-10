@@ -5,7 +5,7 @@
 
 # Boreas MS-42
 
-Boreas MS-42 is a cassette-futurism weather station for the wall or desk: a single-day Celsius forecast for Kings Langley alongside live indoor temperature and humidity, rendered as a 1-bit instrument panel on a 4.2" reflective LCD. It runs on the Waveshare ESP32-S3-RLCD-4.2 board (ESP32-S3, 300×400 ST7305 RLCD, SHTC3 sensor, PCF85063 RTC, 18650 cell) and fetches its forecast from Open-Meteo over Wi-Fi. The name is Boreas, the north wind; *MS* for Met Station; *42* for the 4.2" panel and for the answer to the ultimate question.
+Boreas MS-42 is a cassette-futurism weather station for the wall or desk: a single-day Celsius forecast for a configured location alongside live indoor temperature and humidity, rendered as a 1-bit instrument panel on a 4.2" reflective LCD. It runs on the Waveshare ESP32-S3-RLCD-4.2 board (ESP32-S3, 300×400 ST7305 RLCD, SHTC3 sensor, PCF85063 RTC, 18650 cell) and fetches its forecast from Open-Meteo over Wi-Fi. The name is Boreas, the north wind; *MS* for Met Station; *42* for the 4.2" panel and for the answer to the ultimate question.
 
 The project began as a Raspberry Pi Zero WH + Pimoroni Inky pHAT e-ink design; that lineage is preserved in [DECISIONS.md](DECISIONS.md) D-001. The physical object is intended to sit in the same product family as the Ferrolux RS-1.
 
@@ -16,7 +16,8 @@ Assumes a Linux host with PlatformIO Core installed (see [BUILD.md](BUILD.md) fo
 ```bash
 git clone https://github.com/Darian-Frey/Boreas.git
 cd Boreas
-cp include/secrets.example.h include/secrets.h   # add Wi-Fi SSID/password
+cp include/secrets.example.h include/secrets.h       # add Wi-Fi SSID/password
+cp include/locations.example.h include/locations.h   # set your forecast location
 pio run -t upload                                  # board on USB-C; hold BOOT on first flash
 pio device monitor -b 115200
 ```
@@ -37,7 +38,7 @@ Full detail, including the first-power-on checklist for a brand-new board, in [B
 ```
 Boreas/
 ├── src/                 # firmware (main.cpp + modules, see ARCHITECTURE.md)
-├── include/             # headers, secrets.example.h, pins.h
+├── include/             # headers: pins.h, secrets/locations templates
 ├── lib/                 # vendored/local libraries (none yet)
 ├── assets/              # XBM icons, font notes, mockup exports
 ├── design/              # Design-canvas exports: panel mockup, enclosure concept

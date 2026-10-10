@@ -20,7 +20,7 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 ### F-001 Instrument-panel frame
 **Priority:** Must
 **Acceptance:**
-- Double-line outer border with an inverted header bar reading `BOREAS MS-42 // KINGS LANGLEY`
+- Double-line outer border with an inverted header bar reading `BOREAS MS-42 // <LOCATION>`, the home location name from `include/locations.h` (≤ 14 characters)
 - Header carries date and a clock (HH:MM minimum; see F-016 for seconds)
 - Three body columns: `EXT · OUTDOOR`, `INT · INDOOR`, `READOUTS`, each with an inverted section tab
 - Bottom strip for the hourly trace and rain meter; single-line footer for status
@@ -82,7 +82,7 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 ### F-008 Open-Meteo forecast fetch
 **Priority:** Must
 **Acceptance:**
-- One HTTPS GET per cycle to the Open-Meteo forecast endpoint for the configured lat/lon, requesting current, hourly (next 24 h) and daily (today) fields listed in SPEC.md §Open-Meteo request
+- One HTTPS GET per cycle to the Open-Meteo forecast endpoint for the home location in `include/locations.h`, requesting current, hourly (next 24 h) and daily (today) fields listed in SPEC.md §Open-Meteo request
 - Parsed with an ArduinoJson filter so peak heap use stays < 40 KB
 - Fetch interval 30 min; 15 min when `UMBRELLA ADVISED` is active
 - Failure leaves the previous data on screen and sets the stale flag; retries with backoff (SPEC.md §Retry)
@@ -93,7 +93,7 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 **Acceptance:**
 - NTP sync on boot and every 6 h; Europe/London zone with BST handled by the TZ rule
 - PCF85063 RTC written after each sync and read at boot, so the clock is correct within 2 s after a power cycle with no Wi-Fi
-- `RTC OK` in the footer only when the RTC reports a valid, non-reset time
+- `RTC OK` in the footer only when the RTC time was set by NTP and has not lost power since (oscillator-stop flag clear and NTP marker present, D-015); otherwise `RTC UNSET` and the clock shows `--:--` until NTP succeeds
 **Status:** Not started
 
 ### F-010 Wi-Fi station with reconnect

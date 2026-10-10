@@ -6,7 +6,7 @@ Boreas MS-42: a cassette-futurism weather station on the Waveshare ESP32-S3-RLCD
 
 ## Current state
 
-- **No Boreas firmware yet.** `platformio.ini`, `include/pins.h`, `include/secrets.example.h` and `test/bringup/main.cpp` exist; the bring-up test runs on the board.
+- **No Boreas firmware yet.** `platformio.ini`, `include/pins.h`, the `secrets`/`locations` `.example.h` templates and `test/bringup/main.cpp` exist; the bring-up test runs on the board.
 - `design/` — `panel-mockup.png` (4× scale; known to disagree with SPEC.md §Layout, BUG-001, so SPEC wins). Enclosure concept not yet added.
 - `platformio.ini` — live; U8g2 pinned to a GitHub commit because the registry lacks ≥ 2.36.19.
 - Hardware — board on the bench; Phase 0 bring-up complete (2026-10-10).
@@ -24,6 +24,7 @@ Boreas MS-42: a cassette-futurism weather station on the Waveshare ESP32-S3-RLCD
 - Every GPIO is named in `include/pins.h`; no numeric pin literals elsewhere.
 - The panel is never blanked after boot; failures keep the last good frame and set a flag.
 - Every network operation has an explicit timeout.
+- The real forecast location exists only in the git-ignored `include/locations.h`. Never put a real place name or coordinates in any tracked file, commit message or PR.
 - `St7305Panel::endFrame()` is the only place that sends `0x38`/`0x39`.
 
 ## Build & test

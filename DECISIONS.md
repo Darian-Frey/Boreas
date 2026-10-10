@@ -136,7 +136,7 @@ Status vocabulary: Proposed | Accepted | Superseded by D-NNN | Deprecated.
 **Recorded:** 2026-10-10
 **Status:** Accepted
 **Authors:** Shane Hartley (proposed by Claude)
-**Related:** F-009, AV-005
+**Related:** F-009, AV-005; validity rule refined by D-015
 
 **Context.** The board has a PCF85063 with a backup-cell header. The clock must be right after a power cycle even with no Wi-Fi.
 
@@ -247,3 +247,26 @@ Status vocabulary: Proposed | Accepted | Superseded by D-NNN | Deprecated.
 **Context.** Tier 1 requires a licence before first public commit. Shane's other repos should set the convention; none was specified for this one.
 
 **Decision (proposed).** MIT, matching the permissive norm for hobby firmware and the U8g2 (BSD) / ArduinoJson (MIT) dependencies. Replace the LICENSE file and this entry if a different licence is preferred.
+
+### D-015 RTC time is trusted only after NTP has set it
+**Decided:** 2026-10-10
+**Recorded:** 2026-10-10
+**Status:** Accepted
+**Authors:** Shane Hartley (options proposed by Claude)
+**Related:** D-007, F-009, AV-005, BUG-002, SPEC.md §RTC
+
+**Context.** D-007 reports `RTC OK` when the PCF85063's oscillator-stop (OS) flag is clear. In Phase 0 the new board read `2026-01-05` on 2026-10-10 with the flag clear (BUG-002), so that rule would show a confident, wrong clock on any boot without Wi-Fi.
+
+**Options.**
+- **A. OS flag only** (D-007 as written). Rejected: it passes a running but never-set clock, as BUG-002 showed.
+- **B. OS flag plus a year/date plausibility check** (e.g. not earlier than the firmware build date). Rejected as the rule: a stale but plausible time still passes.
+- **C. OS flag plus an "NTP-set" marker** in the PCF85063's free RAM byte (register `0x03`), written only by `NtpSync` after it writes the time. Chosen.
+
+**Decision.** Option C. The RTC is valid only when the OS flag is clear **and** register `0x03` holds `kRtcNtpMarker`. `NtpSync` writes the time (UTC), then the marker, after every successful sync. Anything else that writes the clock, such as the bring-up test, leaves the marker unset, so the firmware treats that time as unknown.
+
+**Consequences.**
+- The footer shows `RTC OK` only for a time NTP has set. Without that, the header clock shows `--:--`, the footer shows `RTC UNSET`, and the panel waits for NTP.
+- Losing RTC power (battery swap or flat cell with no backup cell) resets the RAM byte and sets the OS flag. Either one invalidates the time, so a power loss can't leave a stale time marked trusted.
+- The marker register was verified on the board in Phase 0: writes and reads back, original restored.
+
+**Reversal conditions.** If the RAM byte proves unreliable (e.g. cleared by something other than power loss), fall back to B as a secondary check alongside the OS flag.
