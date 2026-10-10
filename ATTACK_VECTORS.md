@@ -61,7 +61,7 @@ Severity: Critical (must hold) | Major (regression on release blocks) | Minor (t
 ### AV-006 Panel power-mode mishandling
 **Severity:** Critical
 **Description.** Three ways to get it wrong: (a) writing in LPM and assuming the image is visible immediately; (b) leaving the panel in HPM and wasting power; (c) putting the ESP32 into deep sleep with the panel in a state that clears or ghosts. The panel holds no image without power at all.
-**Detection.** Phase 0 bench test: write a test card, scope/observe refresh behaviour per mode, measure current in each; Phase 3 sleep tests confirm the image survives the sleep/wake cycle before deep sleep is adopted. `St7305Panel` has a single `endFrame()` that encodes the only legal sequence.
+**Detection.** Phase 0 bench test: write a test card, scope/observe refresh behaviour per mode, measure current in each; Phase 3 sleep tests confirm the image survives the sleep/wake cycle before deep sleep is adopted. `St7305Panel` has a single `end_frame()` that encodes the only legal sequence and blocks until the panel is back in LPM.
 **Related decisions.** D-001, D-006.
 **Related features.** F-011.
 

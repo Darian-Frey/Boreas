@@ -78,7 +78,7 @@ Confirm every **[verify]** against the Waveshare schematic PDF (Resources page) 
 | Low Power Mode (LPM) | `0x39` | 1 Hz | Held between redraws |
 | Display off | `0x28` (U8g2 `setPowerSave(1)`) | — | Not LPM; avoid except for shutdown |
 
-Write sequence (`St7305Panel::endFrame()`): `sendF("c", 0x38)` → `sendBuffer()` → delay 100 ms → `sendF("c", 0x39)`. Writing while in LPM is legal but the visible update may lag by up to 1 s. Verified on the board 2026-10-10: a 100 ms HPM hold gives an instant visible update. Holds of 300–1500 ms and staying in HPM were no different. Holds shorter than 100 ms are untested.
+Write sequence (`St7305Panel::end_frame()`): `sendF("c", 0x38)` → `sendBuffer()` → delay 100 ms → `sendF("c", 0x39)`. Writing while in LPM is legal but the visible update may lag by up to 1 s. Verified on the board 2026-10-10: a 100 ms HPM hold gives an instant visible update. Holds of 300–1500 ms and staying in HPM were no different. Holds shorter than 100 ms are untested.
 
 The panel **does not retain an image without power** (D-001 consequences; AV-006).
 

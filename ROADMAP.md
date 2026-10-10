@@ -20,9 +20,10 @@ Phases are append-only. Mark Complete with an ISO date.
 
 ## Phase 1 — Live panel (mains)
 **Goal:** The full Main page on the panel, fed by real data, running indefinitely on USB power.
-**Status:** Not started
+**Status:** In progress — `src/display/` done 2026-10-10
 **Features delivered:** F-001, F-002, F-003, F-004, F-005, F-006, F-007, F-008, F-009, F-010, F-011
 **Deliverables:**
+- [x] `src/display/` — `St7305Panel`: init, `canvas()`, `end_frame()` with the 100 ms HPM hold; on the board 2026-10-10 (21 ms per frame, 60 s redraw)
 - [ ] `src/net/` — Wi-Fi station with reconnect; NTP + TZ; RTC sync
 - [ ] `src/data/` — Open-Meteo client with JSON filter; `WeatherModel` struct; stale/retry logic
 - [ ] `src/sensors/` — SHTC3 reader, derived values (dew point, Δ, comfort band); battery ADC

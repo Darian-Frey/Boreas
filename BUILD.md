@@ -135,7 +135,7 @@ None; PlatformIO fetches the Xtensa toolchain.
 | No `/dev/ttyACM0` and nothing new in `lsusb` (not even a descriptor error in `journalctl -k`) | board switched off: with the 18650 fitted, USB only charges until PWR is clicked | click PWR; if still absent, hold BOOT and click PWR to force download mode |
 | `A fatal error occurred: Failed to connect` | not in download mode | hold BOOT while powering on |
 | Compiles but panel stays blank | wrong U8g2 constructor/rotation, `SPI.begin` pins not called before `u8g2.begin()`, or official `espressif32` platform (2.x core) picked up | check `platformio.ini` platform URL; AV-001 |
-| Panel updates a second late | written while in LPM | `endFrame()` must switch to HPM first (SPEC.md §Panel modes) |
+| Panel updates a second late | written while in LPM | `St7305Panel::end_frame()` must switch to HPM first (SPEC.md §Panel modes) |
 | Random reboots after hours | heap creep | Diag page heap figures; AV-002 |
 | Wrong time after power cycle | no RTC cell, or RTC not written after NTP | D-007 |
 | `Brownout detector was triggered` | weak cell or USB supply | charge; AV-010 |
