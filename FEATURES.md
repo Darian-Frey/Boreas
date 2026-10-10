@@ -32,10 +32,10 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 **Priority:** Must
 **Acceptance:**
 - Current temperature in large numerals (≥ 48 px tall at panel resolution), °C
-- Feels-like, today's high and low on one line
+- Feels-like, today's high and low, stacked beside the condition icon. One line doesn't fit the 138 px column at a readable size: 149–167 px in the label font, measured with the `feels-oneline` preview scene, 2026-10-10
 - Condition text (e.g. `LIGHT RAIN`) mapped from the Open-Meteo WMO weather code
 - Condition icon drawn procedurally or from an XBM asset, ≥ 40 px
-**Status:** Not started
+**Status:** Done 2026-10-10 — column drawn, previewed (typical and worst cases) and approved on the board
 
 ### F-003 Indoor conditions from the onboard SHTC3
 **Priority:** Must

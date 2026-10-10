@@ -4,11 +4,36 @@
 
 #include <cstring>
 
+#include "data/Derived.h"
 #include "data/PanelState.h"
+#include "data/PressureHistory.h"
 
 namespace fixtures {
 
-// Matches the design/ mockup: KINGS LANGLEY, TUE 06 OCT 2026, 13:30:07 BST.
+namespace detail {
+
+// A 24 h forecast starting at the hour containing `now`, with temperatures
+// from `t0` rising by `rise` to a peak 4 h later and falling after.
+inline void fill_hourly(WeatherModel& w, time_t now, float t0, float rise, uint8_t prob) {
+  w.hourly_count = kHourlyRows;
+  const time_t hour0 = now - now % 3600;
+  for (int i = 0; i < kHourlyRows; ++i) {
+    w.hourly[i].time = hour0 + i * 3600;
+    w.hourly[i].temp_c = t0 + rise * (i <= 4 ? i : 8 - i) / 4.0f;
+    w.hourly[i].precip_prob = static_cast<uint8_t>(i < 12 ? prob : 10);
+    w.hourly[i].weather_code = w.current.weather_code;
+  }
+}
+
+inline void finish(PanelState& s) {
+  PressureHistory p;
+  s.derived = derived::derive(s.weather, s.indoor, p, s.now_utc, 1800);
+}
+
+}  // namespace detail
+
+// Matches the design/ mockup: KINGS LANGLEY, TUE 06 OCT 2026, 13:30:07 BST,
+// 14 C light rain, feels 12, high 17, low 9, indoor 21.4 C / 48 %.
 inline PanelState typical() {
   PanelState s;
   s.location_name = "KINGS LANGLEY";
@@ -17,16 +42,45 @@ inline PanelState typical() {
   s.rtc_ok = true;
   s.link = Link::kUp;
   s.rssi = -58;
+  s.last_fetch_utc = 1791288000;  // 13:00 BST
+  s.next_fetch_utc = 1791289800;
+
+  WeatherModel& w = s.weather;
+  w.valid = true;
+  w.fetched_utc = s.last_fetch_utc;
+  w.current = {1791289800, 14.0f, 12.0f, 84, 61, 18.0f, 225, 31.0f, 1009.0f, 2.0f};
+  w.daily_count = 2;
+  w.daily[0] = {1791241200, 17.0f, 9.0f, 1791267000, 1791307560, 2.4f, 70};  // rise 07:10, set 18:26 BST
+  w.daily[1] = {1791327600, 15.0f, 8.0f, 1791353460, 1791393840, 2.0f, 30};
+  detail::fill_hourly(w, s.now_utc, 14.0f, 3.0f, 60);
+
+  s.indoor = {true, 21.4f, 48.0f, 21.4f};
+  s.battery = {true, 3.9f, 3, false, false};
+  detail::finish(s);
   return s;
 }
 
-// Widest header text (AV-007): a 14-character name of the widest capital,
-// the seconds clock, and a wide date (WED 30 SEP 23:59:59 BST).
+// Worst cases (AV-007). Header: a 14-character name of the widest capital,
+// the seconds clock, a wide date (WED 30 SEP 23:59:59 BST). Outdoor: -25 C
+// hero, two-digit negatives, a long condition, night icon.
 inline PanelState worst() {
   PanelState s = typical();
   s.location_name = "WWWWWWWWWWWWWW";
   s.show_seconds = true;
   s.now_utc = 1790809199;
+  WeatherModel& w = s.weather;
+  w.fetched_utc = s.now_utc - 600;
+  w.current.time = s.now_utc - 600;
+  w.current.temp_c = -24.6f;
+  w.current.feels_c = -15.6f;
+  w.current.weather_code = 67;  // FREEZING RAIN
+  w.daily[0].max_c = -10.0f;
+  w.daily[0].min_c = -28.0f;
+  w.daily[0].date = 1790722800;  // 30 SEP local midnight
+  w.daily[0].sunrise = 1790748000;
+  w.daily[0].sunset = 1790789000;  // already set: night
+  detail::fill_hourly(w, s.now_utc, -24.6f, 6.0f, 100);
+  detail::finish(s);
   return s;
 }
 
@@ -36,6 +90,9 @@ inline PanelState unset() {
   s.clock_valid = false;
   s.rtc_ok = false;
   s.link = Link::kConnecting;
+  s.weather = WeatherModel{};  // never fetched
+  s.last_fetch_utc = 0;
+  detail::finish(s);
   return s;
 }
 

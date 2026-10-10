@@ -40,7 +40,7 @@ Boreas/
 ├── src/                 # firmware (main.cpp + modules, see ARCHITECTURE.md)
 ├── include/             # headers: pins.h, secrets/locations templates
 ├── lib/                 # vendored/local libraries (none yet)
-├── assets/              # XBM icons, font notes, mockup exports
+├── assets/              # font sources (IMP-001, if adopted)
 ├── design/              # Design-canvas exports: panel mockup, enclosure concept
 ├── enclosure/           # case CAD (Phase 4)
 ├── tools/               # host-side helpers (preview renderer, icon converter)

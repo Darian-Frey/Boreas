@@ -1,9 +1,10 @@
 // Boreas MS-42 firmware entry point.
 //
-// Temporary Phase 1 scaffold: proves display/, sensors/ and net/ on the
-// board. It reads the sensors, keeps Wi-Fi and NTP running, and redraws a
-// placeholder card every minute and on any state change. The drawing here
-// moves to ui/ and the timing to app/Scheduler as those modules arrive.
+// Temporary Phase 1 scaffold until app/ exists: reads the sensors, keeps
+// Wi-Fi, NTP and the forecast fetch running, builds the PanelState, and
+// redraws the Main page (regions as they land in ui/) every minute and on
+// any state change. Detailed status goes to serial. The timing moves to
+// app/Scheduler.
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -32,11 +33,11 @@
 #include "config.h"
 #include "pins.h"
 #include "sensors/Battery.h"
-#include "sensors/CivilTime.h"
 #include "sensors/Rtc.h"
 #include "sensors/Shtc3.h"
 #include "data/PanelState.h"
 #include "ui/Frame.h"
+#include "ui/Outdoor.h"
 #include "ui/TestCard.h"
 
 namespace {
@@ -65,111 +66,29 @@ RtcReading clock_reading;
 uint32_t last_redraw_ms = 0;
 uint32_t redraw_count = 0;
 
-void draw_placeholder() {
-  U8G2& c = panel.canvas();
-  char line[64];
-  c.clearBuffer();
-  c.drawFrame(3, 3, 394, 294);
-  c.drawFrame(5, 5, 390, 290);
-  c.drawBox(5, 5, 390, 20);
-  c.setDrawColor(0);
-  c.setFont(u8g2_font_7x14B_tr);
-  c.drawStr(10, 20, "BOREAS MS-42");
-  c.setDrawColor(1);
-  c.setFont(u8g2_font_6x12_tr);
-  c.drawStr(12, 50, "PHASE 1 - DISPLAY + SENSORS + NET + METEO");
-  snprintf(line, sizeof(line), "REDRAW %lu  UPTIME %lu MIN", static_cast<unsigned long>(redraw_count),
-           static_cast<unsigned long>(millis() / 60000));
-  c.drawStr(12, 66, line);
-  snprintf(line, sizeof(line), "LAST SEND %lu MS", static_cast<unsigned long>(panel.last_send_us() / 1000));
-  c.drawStr(12, 82, line);
+// The single PanelState (app/ will own it once the Scheduler exists).
+PanelState state;
 
-  if (indoor.valid)
-    snprintf(line, sizeof(line), "INDOOR %.1f C  %.0f %%RH  (RAW %.1f)", indoor.temp_c, indoor.rh,
-             indoor.raw_temp_c);
-  else
-    snprintf(line, sizeof(line), "INDOOR SENSOR FAIL");
-  c.drawStr(12, 106, line);
+void build_state() {
+  PanelState& s = state;
+  s.location_name = locations::kHome.name;
+  s.clock_valid = clock_valid;
+  s.now_utc = time(nullptr);
+  s.rtc_ok = clock_reading.valid;
+  s.link = wifi.connected() ? Link::kUp
+           : wifi.state() == WiFiMgr::State::kConnecting ? Link::kConnecting
+                                                          : Link::kDown;
+  s.rssi = wifi.rssi();
+  s.weather = weather;
+  s.indoor = indoor;
+  s.battery = batt;
+  s.last_fetch_utc = weather.valid ? weather.fetched_utc : 0;
+  s.next_fetch_utc = fetch_count > 0 ? s.now_utc + static_cast<int32_t>(next_fetch_ms - millis()) / 1000 : 0;
+  s.derived = derived::derive(weather, indoor, pressure, s.now_utc, config::kFetchIntervalMs / 1000);
+  s.last_error = last_fetch.ok ? "" : last_fetch.error;
 
-  snprintf(line, sizeof(line), "BATT %.2f V  %u/4%s%s", batt.volts, batt.cells, batt.low ? "  LOW" : "",
-           batt.halt ? "  HALT" : "");
-  c.drawStr(12, 122, line);
-
-  if (!clock_reading.present) {
-    snprintf(line, sizeof(line), "RTC MISSING");
-  } else if (!clock_reading.valid) {
-    snprintf(line, sizeof(line), "RTC UNSET  --:--  (WAITING FOR NTP)");
-  } else {
-    civil::DateTime t = civil::from_utc(clock_reading.utc);
-    snprintf(line, sizeof(line), "RTC OK  %04d-%02d-%02d %02d:%02d UTC", t.year, t.month, t.day, t.hour,
-             t.minute);
-  }
-  c.drawStr(12, 138, line);
-
-  const uint32_t now_ms = millis();
-  switch (wifi.state()) {
-    case WiFiMgr::State::kConnected:
-      snprintf(line, sizeof(line), "WIFI OK  %d DBM  RECONNECTS %lu", wifi.rssi(),
-               static_cast<unsigned long>(wifi.reconnects()));
-      break;
-    case WiFiMgr::State::kConnecting:
-      snprintf(line, sizeof(line), "WIFI CONNECTING");
-      break;
-    case WiFiMgr::State::kWaiting:
-      snprintf(line, sizeof(line), "WIFI DOWN  RETRY IN %lu S",
-               static_cast<unsigned long>(wifi.retry_in_ms(now_ms) / 1000));
-      break;
-    case WiFiMgr::State::kOff:
-      snprintf(line, sizeof(line), "WIFI OFF");
-      break;
-  }
-  c.drawStr(12, 162, line);
-
-  if (ntp.synced())
-    snprintf(line, sizeof(line), "NTP OK  SYNCS %lu  RTC DRIFT %ld S", static_cast<unsigned long>(ntp.sync_count()),
-             static_cast<long>(ntp.last_drift_s()));
-  else
-    snprintf(line, sizeof(line), "NTP %s", ntp.first_sync_overdue(now_ms) ? "OVERDUE" : "WAITING");
-  c.drawStr(12, 178, line);
-
-  if (clock_valid) {
-    time_t now = time(nullptr);
-    struct tm local;
-    localtime_r(&now, &local);
-    strftime(line, sizeof(line), "LOCAL %a %d %b %H:%M %Z", &local);
-  } else {
-    snprintf(line, sizeof(line), "LOCAL --:--");
-  }
-  c.drawStr(12, 194, line);
-
-  if (weather.valid) {
-    time_t fetched = weather.fetched_utc;
-    struct tm local;
-    localtime_r(&fetched, &local);
-    snprintf(line, sizeof(line), "METEO %.1fC FEELS %.1f WMO %u @ %02d:%02d", weather.current.temp_c,
-             weather.current.feels_c, weather.current.weather_code, local.tm_hour, local.tm_min);
-  } else {
-    snprintf(line, sizeof(line), "METEO NO DATA YET");
-  }
-  c.drawStr(12, 218, line);
-  if (fetch_count == 0)
-    snprintf(line, sizeof(line), "FETCH WAITING FOR WIFI + CLOCK");
-  else if (last_fetch.ok)
-    snprintf(line, sizeof(line), "FETCH OK %lu MS  HI %.1f LO %.1f", static_cast<unsigned long>(last_fetch.elapsed_ms),
-             weather.daily[0].max_c, weather.daily[0].min_c);
-  else
-    snprintf(line, sizeof(line), "FETCH FAIL %s", last_fetch.error);
-  c.drawStr(12, 234, line);
-
-  const DerivedModel d = derived::derive(weather, indoor, pressure, time(nullptr), config::kFetchIntervalMs / 1000);
+  const DerivedModel& d = s.derived;
   static const char* const kTrend[] = {"?", "UP", "STEADY", "DOWN"};
-  snprintf(line, sizeof(line), "%s %s%s  WIND %s  UV %s  P %s", d.condition, d.is_night ? "NIGHT" : "DAY",
-           d.stale ? " STALE" : "", d.wind_compass, d.uv_band, kTrend[static_cast<int>(d.pressure_trend)]);
-  c.drawStr(12, 250, line);
-  snprintf(line, sizeof(line), "DEW IN %.1f  D %+.1f  %s  RH %u/10  RAIN %u%% %u/12%s", d.indoor_dew_c, d.delta_c,
-           derived::comfort_text(d.comfort), d.rh_segments, d.max_prob_12h, d.rain_segments,
-           d.umbrella ? " UMBRELLA" : "");
-  c.drawStr(12, 266, line);
   Serial.printf("derived: %s icon=%d night=%d stale=%d wind=%s uv=%s trend=%s dew_in=%.2f delta=%+.2f comfort=%s "
                 "rh_seg=%u first=%u trace=%u min=%.1f max=%.1f peak=%u rain=%u%% seg=%u umbrella=%d\n",
                 d.condition, static_cast<int>(d.icon), d.is_night, d.stale, d.wind_compass, d.uv_band,
@@ -216,7 +135,11 @@ void read_sensors() {
 void redraw() {
   ++redraw_count;
   read_sensors();
-  draw_placeholder();
+  build_state();
+  u8g2_t* g = panel.raw();
+  u8g2_ClearBuffer(g);
+  ui::draw_frame(g, state);
+  ui::draw_outdoor(g, state);
   panel.end_frame();
   Serial.printf("redraw %lu: send %lu us\n", static_cast<unsigned long>(redraw_count),
                 static_cast<unsigned long>(panel.last_send_us()));
@@ -254,18 +177,6 @@ void setup() {
     static MemCanvas check;
     ui::draw_test_card(check.u8g2());
     Serial.printf("preview check: scene test hash %08lx\n", static_cast<unsigned long>(check.hash()));
-  }
-  // Show the real frame chrome with live state for 10 s, then the debug card.
-  {
-    PanelState s;
-    s.location_name = locations::kHome.name;
-    s.clock_valid = clock_valid;
-    s.now_utc = time(nullptr);
-    s.rtc_ok = boot_rtc.valid;
-    u8g2_ClearBuffer(panel.raw());
-    ui::draw_frame(panel.raw(), s);
-    panel.end_frame();
-    delay(10000);
   }
   redraw();
   last_redraw_ms = millis();

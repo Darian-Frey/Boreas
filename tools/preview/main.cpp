@@ -16,7 +16,11 @@
 #include "Png.h"
 #include "config.h"
 #include "display/MemCanvas.h"
+#include "ui/Draw.h"
+#include "ui/Fonts.h"
 #include "ui/Frame.h"
+#include "ui/Icons.h"
+#include "ui/Outdoor.h"
 #include "ui/TestCard.h"
 
 namespace {
@@ -33,9 +37,56 @@ void scene_frame(u8g2_t* g, const PanelState& s) {
   ui::draw_frame(g, s);
 }
 
+void scene_main(u8g2_t* g, const PanelState& s) {
+  u8g2_ClearBuffer(g);
+  ui::draw_frame(g, s);
+  ui::draw_outdoor(g, s);
+}
+
+// Every condition icon, labelled, for review.
+void scene_icons(u8g2_t* g, const PanelState&) {
+  static const struct {
+    Icon icon;
+    const char* name;
+  } kAll[] = {{Icon::kSun, "SUN"},         {Icon::kMoon, "MOON"},       {Icon::kSunCloud, "SUN-CLOUD"},
+              {Icon::kMoonCloud, "MOON-CLOUD"}, {Icon::kCloud, "CLOUD"},     {Icon::kFog, "FOG"},
+              {Icon::kDrizzle, "DRIZZLE"},  {Icon::kRain, "RAIN"},       {Icon::kRainIce, "RAIN-ICE"},
+              {Icon::kSnow, "SNOW"},       {Icon::kStorm, "STORM"},     {Icon::kNone, "NONE"}};
+  u8g2_ClearBuffer(g);
+  u8g2_SetFont(g, ui::fonts::kSource);
+  for (int i = 0; i < 12; ++i) {
+    const int16_t x = static_cast<int16_t>(20 + (i % 6) * 62), y = static_cast<int16_t>(40 + (i / 6) * 110);
+    u8g2_DrawFrame(g, x - 1, y - 1, ui::kIconSize + 2, ui::kIconSize + 2);  // shows the 40x40 box
+    ui::draw_icon(g, kAll[i].icon, x, y);
+    u8g2_DrawStr(g, x, y + 54, kAll[i].name);
+  }
+}
+
+// F-002's "feels, high, low on one line" at two font sizes, against the
+// 138 px the EXT column offers. Bars mark the column's usable width.
+void scene_feels_oneline(u8g2_t* g, const PanelState&) {
+  static const char* const kLines[] = {"FEELS 12\xC2\xB0 \xC2\xB7 HI 17 \xC2\xB7 LO 09",
+                                       "FEELS -16\xC2\xB0 \xC2\xB7 HI -10 \xC2\xB7 LO -28"};
+  u8g2_ClearBuffer(g);
+  int16_t y = 30;
+  for (const uint8_t* font : {ui::fonts::kLabel, u8g2_font_5x7_tf}) {
+    for (const char* line : kLines) {
+      u8g2_DrawVLine(g, 9, y - 12, 16);
+      u8g2_DrawVLine(g, 9 + 138, y - 12, 16);
+      u8g2_SetFont(g, font);
+      u8g2_DrawUTF8(g, 9, y, line);
+      char w[16];
+      snprintf(w, sizeof(w), "%d px", ui::text_width(g, line));
+      u8g2_SetFont(g, ui::fonts::kSource);
+      u8g2_DrawStr(g, 170, y, w);
+      y = static_cast<int16_t>(y + 30);
+    }
+  }
+}
+
 const Scene kScenes[] = {
-    {"test", scene_test},
-    {"frame", scene_frame},
+    {"test", scene_test},   {"frame", scene_frame},           {"main", scene_main},
+    {"icons", scene_icons}, {"feels-oneline", scene_feels_oneline},
 };
 
 int usage() {
