@@ -25,6 +25,12 @@ constexpr int8_t kBootButton = 0;
 constexpr int8_t kKeyButton = 18;
 constexpr int8_t kLocationButton = 17;  // add-on switch to GND on header P1-13
 
+// TF (microSD) slot. The schematic labels these MOSI / SCK / MISO with no
+// CS line, i.e. the SDMMC peripheral in 1-bit mode: CMD, CLK, D0.
+constexpr int8_t kSdCmd = 21;
+constexpr int8_t kSdClk = 38;
+constexpr int8_t kSdD0 = 39;
+
 // Battery voltage through a 3:1 divider [verify ratio].
 constexpr int8_t kBatteryAdc = 4;
 

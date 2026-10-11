@@ -7,6 +7,7 @@
 //   4. Battery voltage on the ADC
 //   5. BOOT / KEY / location button press and release
 //   6. U8g2 ST7305 test card, written in HPM then dropped to LPM
+//   7. TF card over SDMMC 1-bit: mount (never format), write/read/delete a test file
 //
 // The RTC and SHTC3 are driven with raw I2C rather than SensorLib, so a
 // failure here points at the hardware, not a library API.
@@ -15,6 +16,7 @@
 // St7305Panel::endFrame() may do that.
 
 #include <Arduino.h>
+#include <SD_MMC.h>
 #include <SPI.h>
 #include <U8g2lib.h>
 #include <Wire.h>
@@ -248,6 +250,45 @@ void report_sht(const ShtReading& r) {
     Serial.println("SHTC3 FAIL no response or CRC error");
 }
 
+// ---------------------------------------------------------------- TF card
+
+// Mounts the card in SDMMC 1-bit mode and round-trips a test file. Never
+// formats, and touches no file but its own.
+void test_sd_card() {
+  if (!SD_MMC.setPins(pins::kSdClk, pins::kSdCmd, pins::kSdD0)) {
+    Serial.println("SD FAIL setPins");
+    return;
+  }
+  if (!SD_MMC.begin("/sdcard", /*mode1bit=*/true, /*format_if_mount_failed=*/false)) {
+    Serial.println("SD FAIL mount (no card, wrong pins, or not FAT)");
+    return;
+  }
+  static const char* const kTypes[] = {"NONE", "MMC", "SD", "SDHC", "UNKNOWN"};
+  const uint8_t type = SD_MMC.cardType();
+  Serial.printf("SD OK type %s, card %llu MB, fs %llu MB, used %llu MB\n", kTypes[type < 5 ? type : 4],
+                SD_MMC.cardSize() / (1024ULL * 1024), SD_MMC.totalBytes() / (1024ULL * 1024),
+                SD_MMC.usedBytes() / (1024ULL * 1024));
+
+  const char* path = "/boreas_sdtest.txt";
+  const char* payload = "boreas bring-up sd test";
+  File f = SD_MMC.open(path, FILE_WRITE);
+  if (!f) {
+    Serial.println("SD FAIL open for write");
+    SD_MMC.end();
+    return;
+  }
+  f.print(payload);
+  f.close();
+  f = SD_MMC.open(path, FILE_READ);
+  String back = f ? f.readString() : String();
+  if (f) f.close();
+  const bool same = back == payload;
+  const bool removed = SD_MMC.remove(path);
+  Serial.printf("SD %s write/read %s, test file %s\n", same && removed ? "OK" : "FAIL", same ? "match" : "MISMATCH",
+                removed ? "removed" : "NOT removed");
+  SD_MMC.end();
+}
+
 // ---------------------------------------------------------------- Battery
 
 float read_battery_v() {
@@ -429,6 +470,7 @@ void setup() {
     set_rtc_from_build();
   }
   refresh_readings();
+  test_sd_card();
 
   SPI.begin(pins::kLcdSclk, -1, pins::kLcdMosi, pins::kLcdCs);
   u8g2.setBusClock(kSpiClockHz);

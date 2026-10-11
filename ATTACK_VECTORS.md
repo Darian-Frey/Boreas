@@ -18,7 +18,7 @@ Severity: Critical (must hold) | Major (regression on release blocks) | Minor (t
 ### AV-002 Heap fragmentation and allocation in the redraw path
 **Severity:** Critical
 **Description.** The S3 has ample RAM, but a 72-hour soak can still die from fragmentation if `String`, ArduinoJson dynamic documents or `std::vector` growth sit inside the per-minute loop. Symptom: reboot after hours/days, or a fetch that starts failing with no network cause.
-**Detection.** Diagnostics page shows `ESP.getFreeHeap()` and `getMaxAllocHeap()`; soak log (Phase 1 deliverable) must show no downward trend; `-Wall -Werror` plus a grep in CI for `String ` and `new ` under `src/ui/`.
+**Detection.** Diagnostics page shows `ESP.getFreeHeap()` and `getMaxAllocHeap()`; soak log (Phase 1 deliverable) must show no downward trend; `-Wall -Werror` plus a grep in CI for `String ` and `new ` under `src/ui/`. The health log (`/boreas/health.csv` on the TF card, SPEC.md §Health log) records free heap, minimum free heap and largest block every 10 min, plus every reboot with its reset reason; `tools/soak.py` reports the trend in bytes/day and fails above 2 KB/day.
 **Related decisions.** D-005.
 **Related features.** F-008 (JSON filter), F-011.
 

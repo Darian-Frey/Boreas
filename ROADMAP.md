@@ -30,7 +30,7 @@ Phases are append-only. Mark Complete with an ISO date.
 - [ ] `src/ui/` — layout engine on U8g2: frame, columns, trace, meter, footer; icon set. `grid.h`, fonts, `Frame`, icons (D-018), the three columns, trace, rain meter and footer done 2026-10-10: the Main page is complete (geometry tests in `test/test_layout`; `typical`/`worst`/`unset` fixtures fit in the preview; shown live on the board)
 - [x] Host preview build (D-016): `ui/` + U8g2 C core → PNG from fake `PanelState` fixtures, including AV-007 worst cases; generated reference committed to `design/` (closes BUG-001). Harness done 2026-10-10: `pio run -e preview`, test-card scene, hash identical on host and board (`025ad6cf`). Fixtures `typical`/`worst`/`dry`/`stale`/`unset`; `design/panel-reference.png` committed 2026-10-10 (BUG-001 fixed)
 - [x] Scheduler: 1-minute redraw tick, 30/15-minute fetch tick, 6-hour NTP tick. Timing rules in `app/Schedule` (12 host tests, mutation-checked); `app/App` owns the modules and the single `PanelState` and replaced the scaffold (2026-10-11); 6 h NTP is lwIP SNTP's own interval
-- [ ] 72-hour soak on USB with serial logging; no reboot, no heap creep (AV-002)
+- [ ] 72-hour soak on USB; no reboot, no heap creep (AV-002). Logged to the TF card (`/boreas/health.csv`, every 10 min + boots + fetch failures) so it runs on a wall charger; judged with `tools/soak.py`. Logger verified on the board 2026-10-11
 **Acceptance:** All Must features pass their acceptance criteria; soak log clean; a photograph of the panel matching `design/panel-reference.png` (generated, D-016) within reason.
 
 ## Phase 2 — Resilience and pages

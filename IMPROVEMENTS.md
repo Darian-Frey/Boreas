@@ -31,6 +31,7 @@ Effort vocabulary: trivial | small | medium | large.
 **Description.** After a reset, the router still held the board's old session and refused the first association. The driver logged `Association refused too many times` at 1.6 s, but `WiFiMgr` waited for its own 15 s timeout before backing off, so Wi-Fi came up at 21.8 s instead of about 7 s.
 **Proposal.** In `kConnecting`, treat `WL_CONNECT_FAILED` / `WL_NO_SSID_AVAIL` from `WiFi.status()` as an immediate failure. Check on the board first which status the driver actually reports after a refused association.
 **Trade-offs.** Saves about 15 s per reboot only. Small risk of reacting to a transient status during association, which would just retry 5 s sooner. The clock is unaffected, since the RTC shows the time meanwhile.
+**Notes.** 2026-10-11: after a dozen resets in an hour the router kept refusing or dropping the board for about 4 minutes (connect, drop after 25–35 s, `Association refused`) before it settled; the backoff rode it out. Failing fast would not prevent that, but it would shorten each cycle. The soak's `wifi_reconnects` column will show whether drops happen in normal running.
 
 ## Applied
 

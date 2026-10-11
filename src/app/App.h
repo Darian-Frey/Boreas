@@ -18,6 +18,7 @@
 #include "sensors/Battery.h"
 #include "sensors/Rtc.h"
 #include "sensors/Shtc3.h"
+#include "storage/SdLog.h"
 
 class App {
  public:
@@ -32,6 +33,7 @@ class App {
   void update_state(time_t now);
   void redraw();
   int64_t current_minute() const;
+  void log_health(const char* event, const char* note);
 
   // Modules
   St7305Panel panel_;
@@ -41,6 +43,7 @@ class App {
   WiFiMgr wifi_;
   NtpSync ntp_;
   MeteoClient meteo_;
+  SdLog sd_;
 
   // The one PanelState (CLAUDE.md invariant). Its models are the live
   // data: the fetch writes state_.weather, the sensors write indoor/battery.
@@ -53,6 +56,9 @@ class App {
   bool clock_valid_ = false;  // system clock set from a trusted RTC (D-015) or NTP
   bool advisory_ = false;     // UMBRELLA ADVISED in the latest data: 15 min fetches
   uint32_t fetch_count_ = 0;
+  uint32_t fetch_ok_ = 0;
+  uint32_t fetch_fail_ = 0;
+  uint32_t last_health_ms_ = 0;
   uint32_t redraw_count_ = 0;
   int64_t last_minute_ = -1;
 };

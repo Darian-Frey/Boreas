@@ -40,6 +40,8 @@ Single-core cooperative loop on the Arduino framework (`loop()` with a millis-ba
 
 **`src/display/`** — `MemCanvas` is a 400×300 canvas in RAM built on U8g2's portable C core, with a pixel hash; it builds for the board and the host. `St7305Panel` wraps the `U8G2_ST7305_...` constructor, the `SPI.begin(11,-1,12,40)` prelude, rotation, and the HPM/LPM commands (`0x38`/`0x39`). It exposes `begin()` (init, then a cleared frame, ending in LPM), `canvas()` / `raw()` (the buffer as `U8G2&` or `u8g2_t*`; `ui/` uses `raw()`) and `end_frame()`. `end_frame()` sends the buffer in HPM, holds 100 ms, then drops to LPM. It blocks for the hold, so the panel is always in LPM when it returns.
 
+**`src/storage/`** — `SdLog` mounts the TF card (SDMMC 1-bit, never formats) and appends CSV lines with open-write-close; `App` uses it for the health log (SPEC.md §Health log). Missing card or failed write: logging pauses and remounts on the next line.
+
 **`include/`** — `pins.h` (every GPIO in one place), `config.h` (thresholds, calibration offset and RTC marker now; intervals, night hours and timezone as later modules need them), `locations.h` (git-ignored; forecast location name and lat/lon, from `locations.example.h`), `secrets.h` (git-ignored; Wi-Fi credentials, from `secrets.example.h`), `version.h`.
 
 **`tools/`** — Host-side helpers. **Preview** (D-016, `tools/preview/`, `pio run -e preview`): a host-native build of `src/ui/`, `src/data/`, `display/MemCanvas` and U8g2's C core (the pinned package's `clib/` minus hardware drivers). It renders named scenes to PNG with a dependency-free writer (`Png.h`). Pixel identity with the board is checked by hash.

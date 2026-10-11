@@ -39,7 +39,7 @@ Authoritative technical reference. Constants here are the single source of truth
 | BOOT button | 0 | Waveshare schematic; active low; also header P1-5 |
 | Location button (add-on) | 17 | Proposed: external momentary switch to GND on header P1-13; active low, internal pull-up. Location cycling is not yet a feature |
 | Battery ADC | 4 | Waveshare schematic (`BAT_ADC`); 3:1 divider **[verify ratio]** |
-| TF card MOSI / SCK / MISO | 21 / 38 / 39 | Waveshare schematic pin table; CS not shown there **[verify]**; unused |
+| TF card CMD / CLK / D0 | 21 / 38 / 39 | SDMMC 1-bit (the schematic's MOSI / SCK / MISO; no CS line). Verified 2026-10-11: 8 GB SDHC mounted, file round-trip OK. Used for the health log |
 | USB D− / D+ | 19 / 20 | native USB; also header P1-6 / P1-8 |
 | UART0 TX / RX | 43 / 44 | header P1-10 / P1-12; unused (logs go over USB CDC) |
 
@@ -318,6 +318,20 @@ On fetch failure: retry after 1 min, 2 min, 4 min, 8 min, then every 15 min unti
 - Register `0x03` is a free RAM byte used as the NTP marker: `kRtcNtpMarker = 0xB5`. Verified writable and readable on the board, 2026-10-10.
 - **Valid** = OS flag clear **and** register `0x03 == kRtcNtpMarker` (D-015). `NtpSync` writes the time, then the marker. Nothing else writes the marker.
 - No backup cell is fitted yet, so the RTC loses time whenever the board loses power. That was observed in Phase 0 (D-007, BUILD.md §First power-on step 3).
+
+## Health log (TF card, `storage/SdLog`, AV-002)
+
+`/boreas/health.csv` on the card (FAT32, mounted in SDMMC 1-bit mode, **never formatted** by the firmware). Each line is appended with open-write-close, so a power cut loses at most that line. With no card, or after a failed write, logging pauses and the next line tries to remount; the panel never depends on it.
+
+Columns: `utc,local,uptime_s,event,free_heap,min_free_heap,max_block,fetch_ok,fetch_fail,wifi_reconnects,ntp_syncs,indoor_c,batt_v,note`.
+
+| Event | When | `note` |
+|---|---|---|
+| `boot` | after the first redraw | reset reason (`POWERON`, `USB`, `SW`, `PANIC`, `TASK_WDT`, `BROWNOUT`, …) |
+| `tick` | every 10 min (`config::kHealthLogIntervalS`) | — |
+| `fetch_fail` | each failed fetch | the error, commas replaced by `;` |
+
+`utc` is 0 and `local` is `-` until the clock is trusted. Counters reset at each boot. About 45 KB per 72 h. `tools/soak.py` summarises a log: span, reboots and reasons, free-heap trend (B/day over the longest uninterrupted run), smallest largest-block, fetch success rate; `FAIL` on an unexpected reset or a heap fall over 2 KB/day.
 
 ## Battery
 

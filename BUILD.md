@@ -131,18 +131,33 @@ Scenes: `test`, `frame`, `main`, `icons`, `feels-oneline`. Fixtures: `typical`, 
 pio run -e preview && .pio/build/preview/program --scene main --fixture typical -o design/panel-reference.png
 ```
 
-## 5. Tests
+## 5. Soak test (Phase 1, AV-002)
+
+The board logs its own health to the TF card, so no laptop is needed during the run.
+
+1. FAT32 card in the slot; flash the firmware (`pio run -t upload`).
+2. Unplug from the laptop and power from any USB charger. Note the start time.
+3. Leave it 72 h. The panel keeps working throughout; nothing waits on the card.
+4. Power off, take the card to the laptop and run:
+
+```bash
+python3 tools/soak.py /media/$USER/<card>/boreas/health.csv --since "YYYY-MM-DD HH:MM"
+```
+
+`--since` drops the lines from before the soak started (e.g. bench runs). `PASS` needs no unexpected resets and a free-heap trend no worse than −2 KB/day.
+
+## 6. Tests
 
 ```bash
 pio test -e native        # host-native: scheduler backoff, derived values, WMO mapping, layout boxes
 pio test -e boreas        # on-device: I2C devices present, panel constructor, ADC sanity
 ```
 
-## 6. Cross-compilation
+## 7. Cross-compilation
 
 None; PlatformIO fetches the Xtensa toolchain.
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 | Symptom | Likely cause | Fix |
 |---|---|---|

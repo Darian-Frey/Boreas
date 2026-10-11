@@ -51,4 +51,8 @@ constexpr uint32_t kHttpConnectTimeoutMs = 10000;
 constexpr uint16_t kHttpReadTimeoutMs = 10000;
 constexpr uint32_t kTlsHandshakeTimeoutS = 10;
 
+// ---- Health log on the TF card (SPEC.md §Health log, AV-002)
+constexpr const char* kHealthLogPath = "/boreas/health.csv";
+constexpr uint32_t kHealthLogIntervalS = 10 * 60;
+
 }  // namespace config

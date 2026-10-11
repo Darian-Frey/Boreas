@@ -1,7 +1,11 @@
 #include "app/App.h"
 
 #include <Arduino.h>
+#include <esp_system.h>
 #include <sys/time.h>
+
+#include <cstdio>
+#include <cstring>
 
 #if __has_include("secrets.h")
 #include "secrets.h"
@@ -34,6 +38,18 @@ constexpr uint32_t kSerialBaud = 115200;
 // takes the flag.
 constexpr bool kNightMode = false;
 
+const char* reset_reason_name(esp_reset_reason_t r) {
+  static const char* const kNames[] = {"UNKNOWN", "POWERON", "EXT",      "SW",   "PANIC", "INT_WDT",
+                                       "TASK_WDT", "WDT",    "DEEPSLEEP", "BROWNOUT", "SDIO", "USB",
+                                       "JTAG",    "EFUSE",   "PWR_GLITCH", "CPU_LOCKUP"};
+  const int i = static_cast<int>(r);
+  return i >= 0 && i < static_cast<int>(sizeof(kNames) / sizeof(kNames[0])) ? kNames[i] : "?";
+}
+
+constexpr const char* kHealthHeader =
+    "utc,local,uptime_s,event,free_heap,min_free_heap,max_block,fetch_ok,fetch_fail,wifi_reconnects,ntp_syncs,"
+    "indoor_c,batt_v,note";
+
 const char* trend_name(PressureHistory::Trend t) {
   static const char* const kNames[] = {"?", "UP", "STEADY", "DOWN"};
   return kNames[static_cast<int>(t)];
@@ -61,6 +77,8 @@ void App::begin() {
   }
   Serial.printf("RTC at boot: %s\n", boot_rtc.valid ? "valid, system clock set" : "unset, waiting for NTP");
 
+  Serial.printf("SD %s\n", sd_.begin() ? "mounted" : "not available (health log off until a card is present)");
+
   state_.location_name = locations::kHome.name;
   state_.show_seconds = false;  // BOREAS_SECONDS_CLOCK build (D-008) not implemented yet
   wifi_.begin(secrets::kWifiSsid, secrets::kWifiPassword);
@@ -74,6 +92,9 @@ void App::begin() {
   }
 
   redraw();
+  // After the first redraw so the sensor columns are filled in.
+  log_health("boot", reset_reason_name(esp_reset_reason()));
+  last_health_ms_ = millis();
 }
 
 void App::loop() {
@@ -99,6 +120,11 @@ void App::loop() {
                      clock_valid_ != clock_before;
   const int64_t minute = current_minute();
   if (schedule::redraw_due(minute, last_minute_, dirty)) redraw();
+
+  if (now_ms - last_health_ms_ >= config::kHealthLogIntervalS * 1000UL) {
+    last_health_ms_ = now_ms;
+    log_health("tick", "");
+  }
 
   delay(10);
 }
@@ -128,8 +154,11 @@ bool App::service_fetch(time_t now) {
                                 schedule::fetch_interval_s(false, kNightMode))
                     .umbrella;
     fetch_schedule_.on_success(done, advisory_, kNightMode);
+    ++fetch_ok_;
   } else {
     fetch_schedule_.on_failure(done);
+    ++fetch_fail_;
+    log_health("fetch_fail", last_fetch_.error);
   }
   Serial.printf("fetch %lu: %s (http %d, %lu ms) %s | heap free %lu, min ever %lu | next in %ld s%s\n",
                 static_cast<unsigned long>(fetch_count_), last_fetch_.ok ? "OK" : "FAIL", last_fetch_.http_status,
@@ -183,4 +212,31 @@ void App::redraw() {
                 static_cast<double>(state_.battery.volts), state_.rtc_ok ? "OK" : "UNSET", d.condition,
                 d.is_night ? "night" : "day", d.stale, trend_name(d.pressure_trend), d.max_prob_12h, d.umbrella,
                 static_cast<unsigned long>(ESP.getFreeHeap()));
+}
+
+// One CSV line to the TF card (SPEC.md §Health log) and serial. Not in the
+// redraw path; stack buffers only.
+void App::log_health(const char* event, const char* note) {
+  char local[24] = "-";
+  const time_t now = time(nullptr);
+  if (clock_valid_) {
+    struct tm t;
+    localtime_r(&now, &t);
+    strftime(local, sizeof(local), "%Y-%m-%d %H:%M:%S", &t);
+  }
+  char clean[64];
+  snprintf(clean, sizeof(clean), "%s", note ? note : "");
+  for (char* c = clean; *c; ++c)
+    if (*c == ',' || *c == '\n' || *c == '\r') *c = ';';
+
+  char line[256];
+  snprintf(line, sizeof(line), "%lld,%s,%lu,%s,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%.1f,%.2f,%s",
+           clock_valid_ ? static_cast<long long>(now) : 0LL, local, static_cast<unsigned long>(millis() / 1000), event,
+           static_cast<unsigned long>(ESP.getFreeHeap()), static_cast<unsigned long>(ESP.getMinFreeHeap()),
+           static_cast<unsigned long>(ESP.getMaxAllocHeap()), static_cast<unsigned long>(fetch_ok_),
+           static_cast<unsigned long>(fetch_fail_), static_cast<unsigned long>(wifi_.reconnects()),
+           static_cast<unsigned long>(ntp_.sync_count()), static_cast<double>(state_.indoor.temp_c),
+           static_cast<double>(state_.battery.volts), clean);
+  const bool written = sd_.append(config::kHealthLogPath, kHealthHeader, line);
+  Serial.printf("health%s: %s\n", written ? "" : " (not written)", line);
 }

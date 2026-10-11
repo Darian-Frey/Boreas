@@ -9,7 +9,15 @@ Severity vocabulary: low | medium | high.
 
 ## Open
 
-_None._
+### BUG-004: Panel stopped updating while the firmware kept running; only a power-cycle recovered it
+**Status:** open
+**Found:** 2026-10-11 (first on-board run of the SD health log)
+**Location:** cross-cutting: `display/St7305Panel`, panel hardware; possibly power
+**Severity:** high
+**Description.** The panel froze showing 22:07 while serial showed the firmware redrawing every minute (`redraw N`, ~21 ms sends) for 15+ minutes. The freeze followed the first forecast fetch of that boot (22:07:40), during a period of repeated Wi-Fi drops and reassociations. A reflash (ESP32 reset, U8g2 init sequence with the RST pulse) did **not** recover the panel; a full power-cycle (PWR off/on) did. A frozen panel shows confident, wrong data with no flag, which breaks the "never blank, failures flagged" invariant in spirit. The firmware can't see it: the panel interface is write-only (no MISO).
+**Reproduction.** Not yet reproduced. Conditions at the time: TF card mounted with health-log writes every 60 s (test interval), Wi-Fi reconnecting every ~25-35 s, first TLS fetch just completed.
+**Notes.** Hypothesis (unconfirmed): a supply dip with Wi-Fi TX, SD write and panel refresh coinciding latched the panel's internal booster or controller into a state only a power loss clears. Next steps: (1) check the Waveshare schematic and ST7305 datasheet for a panel power-enable or a readable status; (2) watch for recurrence during the 72 h soak (the user glances at the panel clock; the health log gives what the board was doing at that time); (3) if it recurs, test with the SD log disabled to rule the card in or out. Related: AV-006, AV-010.
+
 
 ## Fixed
 
