@@ -40,6 +40,14 @@ constexpr uint32_t kNtpFirstSyncTimeoutMs = 60000;        // after Wi-Fi up, fla
 
 // ---- Forecast fetch (F-008, SPEC.md §Scheduling and §Retry)
 constexpr uint32_t kFetchIntervalMs = 30UL * 60 * 1000;
+// Schedule in clock seconds (app/Schedule): fetches land on aligned slots,
+// 15 s past :00/:15/:30/:45 as the interval allows.
+constexpr uint32_t kFetchIntervalS = 30 * 60;
+constexpr uint32_t kFetchAdvisoryIntervalS = 15 * 60;  // while UMBRELLA ADVISED
+constexpr uint32_t kFetchNightIntervalS = 60 * 60;     // night mode (F-014); wins over advisory
+constexpr uint32_t kFetchSlotOffsetS = 15;
+constexpr uint32_t kFetchRetryInitialS = 60;
+constexpr uint32_t kFetchRetryCapS = 15 * 60;
 constexpr uint32_t kFetchRetryInitialMs = 1UL * 60 * 1000;  // then 2, 4, 8 min
 constexpr uint32_t kFetchRetryCapMs = 15UL * 60 * 1000;     // then every 15 min
 constexpr uint32_t kHttpConnectTimeoutMs = 10000;

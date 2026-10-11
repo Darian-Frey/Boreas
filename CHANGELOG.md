@@ -31,6 +31,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - `ui/Trace` (F-005: 13-point curve, grid, labelled peak, now pointer, hour labels) and `ui/RainMeter` (F-006: 12-cell meter, scale, advisory box inverted for `UMBRELLA ADVISED`, otherwise `NO UMBRELLA NEEDED` until F-015). `dry` preview fixture; no-data states for both.
 - `ui/Footer` (F-007): last and next fetch, RTC state, Wi-Fi bars (`derived::wifi_bars`, tested), battery gauge and voltage; inverted `!! STALE` bar naming the cause. Main page complete. `stale` preview fixture.
 - `design/panel-reference.png`: the Main page rendered from the `typical` fixture, now the Phase 1 photographic reference (BUG-001 fixed). Regeneration step in BUILD.md; hash in SPEC.md.
+- `app/Schedule` (timing rules, SPEC.md §Scheduling): fetch interval (night > advisory > normal), aligned fetch slots 15 s past the interval with a half-interval floor, retry backoff, redraw-due, protection against the clock jumping backwards. `test/test_app` (12 tests); schedule constants in seconds in `config.h`.
 - `include/locations.example.h`: forecast location template. The real location lives in the git-ignored `include/locations.h`.
 ### Changed
 - Project retargeted from Raspberry Pi Zero WH + Inky pHAT to the Waveshare ESP32-S3-RLCD-4.2 (D-001).
