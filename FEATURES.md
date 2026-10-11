@@ -86,7 +86,7 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 - Parsed with an ArduinoJson filter so the JSON parse peaks below 40 KB of heap. The peak for the whole fetch, TLS included, is measured and recorded in SPEC.md (about 55 KB, 2026-10-10). Free heap returns to its pre-fetch level after each fetch (AV-002)
 - Fetch interval 30 min; 15 min when `UMBRELLA ADVISED` is active
 - Failure leaves the previous data on screen and sets the stale flag; retries with backoff (SPEC.md §Retry)
-**Status:** In progress — fetch, verified TLS, validation and retry working on the board (2026-10-10); the stale flag and the advisory-driven 15 min interval come with `app/Scheduler`
+**Status:** Done 2026-10-11 — fetch, verified TLS, validation, aligned 30/15 min slots and retry backoff via `app/Schedule` + `App` on the board; stale flag in the footer
 
 ### F-009 Time from NTP, held by the RTC
 **Priority:** Must
@@ -110,7 +110,7 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 **Acceptance:**
 - Panel redrawn once a minute (clock tick) and on any data change
 - After each redraw the ST7305 is put into Low Power Mode (1 Hz self-refresh); switched to High Power Mode only for the write (SPEC.md §Panel modes)
-**Status:** Not started
+**Status:** Done 2026-10-11 — `App` redraws on the clock minute and on any data change; `St7305Panel::end_frame()` holds HPM 100 ms then LPM
 
 ### F-012 Boot splash and self-test
 **Priority:** Should
