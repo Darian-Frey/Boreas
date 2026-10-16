@@ -20,17 +20,22 @@ Phases are append-only. Mark Complete with an ISO date.
 
 ## Phase 1 — Live panel (mains)
 **Goal:** The full Main page on the panel, fed by real data, running indefinitely on USB power.
-**Status:** In progress — `src/display/`, the `src/sensors/` readers, and Wi-Fi/NTP in `src/net/` done 2026-10-10
+**Status:** In progress. All firmware for the Main page is done and running on the board (2026-10-16). Remaining: an uninterrupted 72 h soak clear of BUG-004, the RTC backup cell for F-009, CI, and the photo check.
 **Features delivered:** F-001, F-002, F-003, F-004, F-005, F-006, F-007, F-008, F-009, F-010, F-011
 **Deliverables:**
-- [x] `src/display/` — `St7305Panel`: init, `canvas()`, `end_frame()` with the 100 ms HPM hold; on the board 2026-10-10 (21 ms per frame, 60 s redraw)
-- [ ] `src/net/` — Wi-Fi station with reconnect; NTP + TZ; RTC sync. Wi-Fi + NTP + RTC sync done 2026-10-10 (on the board: connect 5 s, sync 3 s later, RTC trusted at next boot, recovered from a refused association). `MeteoClient` done 2026-10-10 (verified TLS, 0.7–0.9 s per fetch, retries on the shared `Backoff`)
-- [ ] `src/data/` — Open-Meteo client with JSON filter; `WeatherModel` struct; stale/retry logic. Client, filter, validation and `WeatherModel` done 2026-10-10; retry runs in the scaffold. Stale flag and `app/Scheduler` still to do
-- [x] `src/sensors/` — SHTC3 reader, derived values (dew point, Δ, comfort band); battery ADC. Readers done 2026-10-10 (SHTC3, battery, RTC with the D-015 rule; host tests for date maths and gauge). Derived values done 2026-10-10 in `src/data/Derived` + `PressureHistory` (20 host tests; checked against the live forecast on the board)
-- [ ] `src/ui/` — layout engine on U8g2: frame, columns, trace, meter, footer; icon set. `grid.h`, fonts, `Frame`, icons (D-018), the three columns, trace, rain meter and footer done 2026-10-10: the Main page is complete (geometry tests in `test/test_layout`; `typical`/`worst`/`unset` fixtures fit in the preview; shown live on the board)
-- [x] Host preview build (D-016): `ui/` + U8g2 C core → PNG from fake `PanelState` fixtures, including AV-007 worst cases; generated reference committed to `design/` (closes BUG-001). Harness done 2026-10-10: `pio run -e preview`, test-card scene, hash identical on host and board (`025ad6cf`). Fixtures `typical`/`worst`/`dry`/`stale`/`unset`; `design/panel-reference.png` committed 2026-10-10 (BUG-001 fixed)
-- [x] Scheduler: 1-minute redraw tick, 30/15-minute fetch tick, 6-hour NTP tick. Timing rules in `app/Schedule` (12 host tests, mutation-checked); `app/App` owns the modules and the single `PanelState` and replaced the scaffold (2026-10-11); 6 h NTP is lwIP SNTP's own interval
-- [ ] 72-hour soak on USB; no reboot, no heap creep (AV-002). Logged to the TF card (`/boreas/health.csv`, every 10 min + boots + fetch failures) so it runs on a wall charger; judged with `tools/soak.py`. Logger verified on the board 2026-10-11. First soak 2026-10-11 → 16 (116 h total, `INCOMPLETE`): healthy — heap trend −66 to −84 B/day, largest block constant at 131 060, no crashes, 0 Wi-Fi reconnects, NTP every ~6 h, 93 % fetches OK (all failures Open-Meteo 503s on the hour, IMP-005) — but two power-on resets split it into 19.5 h, 41.8 h and 54.5 h runs
+- [x] `src/display/` — `St7305Panel`: init, `canvas()`/`raw()`, `end_frame()` with the 100 ms HPM hold; on the board 2026-10-10 (21 ms per frame). `reinit()` self-heal every 15 min added 2026-10-16 (D-019, BUG-004 mitigation)
+- [x] `src/net/` — Wi-Fi station with capped-backoff reconnect; NTP + TZ; RTC write with the D-015 marker; `MeteoClient` with verified TLS (D-017). Done 2026-10-10; Wi-Fi fail-fast on driver disconnect 2026-10-16 (IMP-004: up at ~8 s after a reset instead of ~21 s)
+- [x] `src/data/` — `WeatherModel`, `PanelState`, `Derived` (dew point, Δ, comfort, WMO text and icons, outlook, umbrella, trace extremes incl. the low, stale flag), `PressureHistory`; Open-Meteo JSON filter and AV-009 validation in `net/MeteoParse.h`. Done 2026-10-10/16
+- [x] `src/sensors/` — SHTC3, battery ADC, RTC (D-015 validity rule); host tests for date maths and gauge. Done 2026-10-10
+- [x] `src/ui/` — frame, three columns, trace (peak and low), rain meter, footer, drawn icons (D-018); geometry tests in `test/test_layout`. Main page complete 2026-10-10; low label 2026-10-16; fonts restyled with U8g2 built-ins 2026-10-16 (IMP-001: VCR clock, spleen labels/readouts)
+- [x] Host preview build (D-016): `ui/` + U8g2 C core → PNG, hash identical on host and board (`025ad6cf`); fixtures `typical`/`worst`/`dry`/`stale`/`unset`; font sheets. `design/panel-reference.png` regenerated with every `ui/` change (currently `d09885fa`; BUG-001 fixed)
+- [x] Scheduler — `app/Schedule` timing rules (fetch 30/15 min on slots 7 min 15 s past, IMP-005; retry backoff; redraw on the minute and on change; 13 host tests, mutation-checked) and `app/App`, the single `PanelState` owner (2026-10-11). 6 h NTP is lwIP SNTP's own interval
+- [x] Health log on the TF card — `storage/SdLog`, `/boreas/health.csv` (boots with reset reason, 10 min ticks, fetch failures); `dump` serial command + `tools/sdlog.py` read it over USB; `tools/soak.py` judges a soak (2026-10-11/16). TF pins verified (SDMMC 1-bit)
+- [ ] 72-hour soak on USB; no reboot, no heap creep (AV-002), no stuck panel (BUG-004). First soak 2026-10-11 → 16 (116 h, `INCOMPLETE`): heap trend −66 to −84 B/day, largest block constant at 131 060, no crashes, 0 Wi-Fi reconnects, NTP every ~6 h, 93 % fetches OK (all failures Open-Meteo 503s on the hour → IMP-005). Two power-offs to recover a blank and a half-blank panel split it into 19.5 h, 41.8 h and 54.5 h runs. **Next:** one uninterrupted 72 h run on the current build (D-019 self-heal, IMP-004, IMP-005, new fonts)
+- [ ] BUG-004 (panel stops updating) — mitigated by D-019; close once a 72 h soak passes with no stuck panel, or pursue the cause (HPM-only and SD-off variants) if it recurs
+- [ ] F-009 power-cycle criterion — fit an MS621FE rechargeable cell to the RTC's PH1.0 header. Without it the RTC loses time at every power-off (seen at each soak power-on), so the clock waits for NTP
+- [ ] CI — GitHub Actions on every push: firmware build (example `secrets.h`/`locations.h`), `pio test -e native`, preview build with the reference-hash check, no `String`/`new` under `src/ui/`. AV-001 and AV-002 already rely on it
+- [ ] Photograph the panel and compare with `design/panel-reference.png`
 **Acceptance:** All Must features pass their acceptance criteria; soak log clean; a photograph of the panel matching `design/panel-reference.png` (generated, D-016) within reason.
 
 ## Phase 2 — Resilience and pages
@@ -39,7 +44,7 @@ Phases are append-only. Mark Complete with an ISO date.
 **Features delivered:** F-012, F-013, F-015
 **Deliverables:**
 - [ ] Boot splash with self-test checklist
-- [ ] KEY button page cycling with 60 s return
+- [ ] KEY button page cycling with 60 s return (under consideration 2026-10-16: an add-on 4-button module, K1–K4 switching to GND, plugged into header P1 pins 3–11 for GPIO0–3; functions and pins not yet decided)
 - [ ] Diagnostics page
 - [ ] Footer one-liner table
 - [ ] Fault injection: pull Wi-Fi, block DNS, feed malformed JSON, unplug USB mid-fetch — all recorded in BUGS.md or confirmed handled
