@@ -23,8 +23,10 @@ Effort vocabulary: trivial | small | medium | large.
 **Trade-offs.** Flash cost (small, with restricted ranges); a licence check per font; with D-016's host preview these fonts render exactly, so no preview gap. Do this only after the Phase 1 font pass shows the built-ins fall short.
 **Notes.** Depends on D-005. Record the final font set in SPEC.md §Layout.
 
+## Applied
+
 ### IMP-004: Fail a Wi-Fi attempt as soon as the driver reports it, not after the 15 s timeout
-**Status:** suggested
+**Status:** applied
 **Found:** 2026-10-10 (first on-board run of `src/net/WiFiMgr`)
 **Location:** `src/net/WiFiMgr.cpp` (`State::kConnecting`)
 **Effort:** small
@@ -32,8 +34,7 @@ Effort vocabulary: trivial | small | medium | large.
 **Proposal.** In `kConnecting`, treat `WL_CONNECT_FAILED` / `WL_NO_SSID_AVAIL` from `WiFi.status()` as an immediate failure. Check on the board first which status the driver actually reports after a refused association.
 **Trade-offs.** Saves about 15 s per reboot only. Small risk of reacting to a transient status during association, which would just retry 5 s sooner. The clock is unaffected, since the RTC shows the time meanwhile.
 **Notes.** 2026-10-11: after a dozen resets in an hour the router kept refusing or dropping the board for about 4 minutes (connect, drop after 25–35 s, `Association refused`) before it settled; the backoff rode it out. Failing fast would not prevent that, but it would shorten each cycle. The soak's `wifi_reconnects` column will show whether drops happen in normal running.
-
-## Applied
+**Applied.** 2026-10-16. Measured first: after a refused association `WiFi.status()` stays `WL_DISCONNECTED` (6), the same as "still connecting", and never becomes `WL_CONNECT_FAILED`, so the proposed status check could not work. Instead a `STA_DISCONNECTED` event callback counts disconnects in atomics (ignoring our own `ASSOC_LEAVE`), and `WiFiMgr` ends the attempt on the first one, or the second on the first attempt after boot, when the core retries once itself. On the board after a reset: refused attempt ended at 1.8 s (reason 36 `STA_LEAVING`) instead of 15 s; connected at 7.7 s instead of ~21 s. `WiFiMgr` also logs `WiFi.status()` changes to serial.
 
 ### IMP-005: Move fetch slots off the top of the hour
 **Status:** applied

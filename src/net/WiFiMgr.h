@@ -1,8 +1,9 @@
 // Wi-Fi station with capped-backoff reconnect (F-010).
 //
-// Polled from loop(): no Wi-Fi event callbacks, and nothing here blocks.
-// Each association attempt has an explicit timeout
-// (config::kWifiConnectTimeoutMs).
+// Polled from loop(); nothing here blocks. One Wi-Fi event callback
+// (station disconnected) only records the event in atomics. An attempt
+// fails as soon as the driver reports it over (IMP-004), with the explicit
+// timeout (config::kWifiConnectTimeoutMs) as a backstop.
 #pragma once
 
 #include <cstdint>
@@ -36,5 +37,8 @@ class WiFiMgr {
   uint32_t state_since_ms_ = 0;
   uint32_t wait_ms_ = 0;
   uint32_t reconnects_ = 0;
+  int last_status_ = -1;          // WiFi.status() last seen, for the change log
+  uint32_t disconnects_at_start_ = 0;  // driver disconnect events when this attempt began
+  bool first_attempt_ = true;     // the core retries its very first failure once by itself
   Backoff backoff_{0, 0};
 };

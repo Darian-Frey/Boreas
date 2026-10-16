@@ -39,6 +39,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - D-019 panel self-heal: `St7305Panel::reinit()` every 15 min before a redraw (BUG-004 mitigation; 140 ms). BUG-004 updated with two recurrences during the soak (blank, half blank).
 - Trace now labels the low as well as the peak (F-005): `DerivedModel::trace_low`, a shared marker helper with cleared label patches, curve band 227–244. Reference image regenerated (`e291ad35`).
 - IMP-005 applied: fetch slots moved from 15 s to 7 min 15 s past the interval (:07:15 / :37:15), away from Open-Meteo's busy top of the hour; new test that no slot falls in an hour's first 5 minutes.
+- IMP-004 applied: Wi-Fi attempts end as soon as the driver reports a disconnect (event callback into atomics), not after the 15 s timeout; status-change log on serial. After a reset Wi-Fi is up at ~8 s instead of ~21 s.
 - `include/locations.example.h`: forecast location template. The real location lives in the git-ignored `include/locations.h`.
 ### Changed
 - Project retargeted from Raspberry Pi Zero WH + Inky pHAT to the Waveshare ESP32-S3-RLCD-4.2 (D-001).
