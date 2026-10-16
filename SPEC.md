@@ -82,6 +82,8 @@ Write sequence (`St7305Panel::end_frame()`): `sendF("c", 0x38)` → `sendBuffer(
 
 The panel **does not retain an image without power** (D-001 consequences; AV-006).
 
+**Self-heal (D-019, BUG-004):** every 15 min (`config::kPanelReinitIntervalS`), just before a redraw, `St7305Panel::reinit()` re-runs U8g2's start-up (RST pulse + init sequence, 140 ms measured), then the frame is drawn and sent as usual.
+
 ## Layout (400×300, `ui/grid.h`)
 
 This table is authoritative and matches `src/ui/grid.h` exactly; `test/test_layout` checks its geometry. `design/panel-reference.png` is the rendered result (below). `design/panel-mockup.png` is a style reference only and disagrees in detail (BUG-001, fixed). All coordinates in panel pixels after rotation; `x`/`y` is the top-left, and regions are content areas *between* the 1 px rules.
@@ -331,7 +333,9 @@ Columns: `utc,local,uptime_s,event,free_heap,min_free_heap,max_block,fetch_ok,fe
 | `tick` | every 10 min (`config::kHealthLogIntervalS`) | — |
 | `fetch_fail` | each failed fetch | the error, commas replaced by `;` |
 
-`utc` is 0 and `local` is `-` until the clock is trusted. Counters reset at each boot. About 45 KB per 72 h. `tools/soak.py` summarises a log: span, reboots and reasons, free-heap trend (B/day over the longest uninterrupted run), smallest largest-block, fetch success rate; `FAIL` on an unexpected reset or a heap fall over 2 KB/day.
+`utc` is 0 and `local` is `-` until the clock is trusted (e.g. after a power-on with no RTC backup cell, until NTP).
+
+Reading it without removing the card: send `dump` + newline on the USB serial port; the firmware replies `BEGIN <path> <size>`, the file bytes, then `END <bytes sent>`, and waits for the host while dumping (AV-011 drop mode is suspended). `tools/sdlog.py` does this and checks the byte count. Open the port with default DTR/RTS: forcing them low before opening resets the board. Counters reset at each boot. About 45 KB per 72 h. `tools/soak.py` summarises a log: boots with reset reasons (times estimated for untimed boots), and per boot session the length, free-heap trend, minimum free heap, smallest largest-block, fetch success, reconnects and NTP syncs; plus fetch failures by reason and minute past the hour. `PASS`; `FAIL` on an unexpected reset or a heap fall over 2 KB/day; `INCOMPLETE` if healthy but no run reached 72 h.
 
 ## Battery
 

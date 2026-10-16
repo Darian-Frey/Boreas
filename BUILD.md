@@ -138,13 +138,19 @@ The board logs its own health to the TF card, so no laptop is needed during the 
 1. FAT32 card in the slot; flash the firmware (`pio run -t upload`).
 2. Unplug from the laptop and power from any USB charger. Note the start time.
 3. Leave it 72 h. The panel keeps working throughout; nothing waits on the card.
-4. Power off, take the card to the laptop and run:
+4. Get the log, either by plugging the running board into the laptop (no need to remove the card):
 
 ```bash
-python3 tools/soak.py /media/$USER/<card>/boreas/health.csv --since "YYYY-MM-DD HH:MM"
+~/.local/share/pipx/venvs/platformio/bin/python tools/sdlog.py -o health.csv   # sends `dump` over USB
 ```
 
-`--since` drops the lines from before the soak started (e.g. bench runs). `PASS` needs no unexpected resets and a free-heap trend no worse than −2 KB/day.
+   or by taking the card out and copying `boreas/health.csv`. Then:
+
+```bash
+python3 tools/soak.py health.csv --since "YYYY-MM-DD HH:MM"
+```
+
+`--since` drops the lines from before the soak started (e.g. bench runs). `PASS` needs no unexpected resets, a free-heap trend no worse than −2 KB/day, and one uninterrupted run of 72 h (`INCOMPLETE` if healthy but shorter). Don't switch the board off mid-run: a power-off ends the run (`POWERON` boots are expected resets, but they restart the 72 h).
 
 ## 6. Tests
 

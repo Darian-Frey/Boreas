@@ -7,6 +7,9 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
+
+class Print;
 
 class SdLog {
  public:
@@ -16,6 +19,13 @@ class SdLog {
   // Appends one line (no trailing newline needed) to `path`. If the file is
   // new, `header` is written first. Returns false if the line was not written.
   bool append(const char* path, const char* header, const char* line);
+
+  // Streams the whole file to `out`. Returns the bytes sent, or -1 if the
+  // file can't be opened.
+  int32_t dump(const char* path, Print& out);
+
+  // Size of `path` in bytes, or -1 if it can't be opened.
+  int32_t size(const char* path);
 
   bool mounted() const { return mounted_; }
 

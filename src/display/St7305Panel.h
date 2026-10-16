@@ -24,6 +24,12 @@ class St7305Panel {
   // identical code builds for the host preview (D-016).
   u8g2_t* raw();
 
+  // Self-heal (D-019, BUG-004): re-runs the controller's full start-up
+  // (hardware reset pulse + init sequence) without touching SPI set-up.
+  // Clears panel RAM and the canvas, and leaves the panel in HPM: draw and
+  // end_frame() straight afterwards. Returns how long it took, in ms.
+  uint32_t reinit();
+
   // Sends the buffer: HPM (0x38) -> sendBuffer() -> hold -> LPM (0x39).
   // Blocks for the hold (kHpmHoldMs), so the panel is always in LPM on
   // return; safe to sleep straight after.

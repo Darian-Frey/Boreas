@@ -35,6 +35,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - `app/App`: owns every module and the single `PanelState`; fetches on `FetchScheduler` slots (15 min while an umbrella is advised), redraws on the clock minute and on change. `main.cpp` reduced to `App::begin()`/`loop()`. F-008 and F-011 done. Unused millisecond fetch constants removed from `config.h`.
 - Health log on the TF card: `storage/SdLog` (SDMMC 1-bit, never formats, open-append-close), `/boreas/health.csv` with boot (reset reason), 10-min tick and fetch-failure lines; `tools/soak.py` summarises and judges a soak. TF pins verified (CMD 21, CLK 38, D0 39). Bring-up test gained an SD round-trip. BUILD.md §5 soak procedure.
 - BUG-004 (open): panel froze while the firmware kept redrawing; only a power-cycle recovered it.
+- Serial `dump` command and `tools/sdlog.py`: copy the health log over USB without removing the card. `tools/soak.py` now reports per boot session, estimates untimed boot times, groups fetch failures by minute, and returns `INCOMPLETE` when no run reaches 72 h. IMP-005 (fetch slots off the hour, after 503s at hh:00 in the soak).
+- D-019 panel self-heal: `St7305Panel::reinit()` every 15 min before a redraw (BUG-004 mitigation; 140 ms). BUG-004 updated with two recurrences during the soak (blank, half blank).
 - `include/locations.example.h`: forecast location template. The real location lives in the git-ignored `include/locations.h`.
 ### Changed
 - Project retargeted from Raspberry Pi Zero WH + Inky pHAT to the Waveshare ESP32-S3-RLCD-4.2 (D-001).

@@ -34,6 +34,7 @@ class App {
   void redraw();
   int64_t current_minute() const;
   void log_health(const char* event, const char* note);
+  void service_serial();
 
   // Modules
   St7305Panel panel_;
@@ -59,6 +60,10 @@ class App {
   uint32_t fetch_ok_ = 0;
   uint32_t fetch_fail_ = 0;
   uint32_t last_health_ms_ = 0;
+  uint32_t last_panel_init_ms_ = 0;
+  uint32_t panel_reinits_ = 0;
   uint32_t redraw_count_ = 0;
   int64_t last_minute_ = -1;
+  char cmd_[16] = "";  // serial command being typed
+  uint8_t cmd_len_ = 0;
 };

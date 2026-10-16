@@ -83,6 +83,7 @@ void App::begin() {
   state_.show_seconds = false;  // BOREAS_SECONDS_CLOCK build (D-008) not implemented yet
   wifi_.begin(secrets::kWifiSsid, secrets::kWifiPassword);
   panel_.begin();
+  last_panel_init_ms_ = millis();
 
   // D-016 proof: the board must hash this scene exactly as the host preview does.
   {
@@ -98,6 +99,7 @@ void App::begin() {
 }
 
 void App::loop() {
+  service_serial();
   const uint32_t now_ms = millis();
   const Link link_before = state_.link;
   const uint32_t syncs_before = ntp_.sync_count();
@@ -188,6 +190,16 @@ void App::update_state(time_t now) {
 }
 
 void App::redraw() {
+  // Self-heal (D-019): re-initialise the controller before drawing, so the
+  // fresh frame goes straight onto a known-good panel.
+  const uint32_t now_ms = millis();
+  if (now_ms - last_panel_init_ms_ >= config::kPanelReinitIntervalS * 1000UL) {
+    const uint32_t took = panel_.reinit();
+    last_panel_init_ms_ = now_ms;
+    ++panel_reinits_;
+    Serial.printf("panel reinit %lu: %lu ms\n", static_cast<unsigned long>(panel_reinits_),
+                  static_cast<unsigned long>(took));
+  }
   ++redraw_count_;
   last_minute_ = current_minute();
   read_sensors();
@@ -239,4 +251,34 @@ void App::log_health(const char* event, const char* note) {
            static_cast<double>(state_.battery.volts), clean);
   const bool written = sd_.append(config::kHealthLogPath, kHealthHeader, line);
   Serial.printf("health%s: %s\n", written ? "" : " (not written)", line);
+}
+
+// Serial commands (newline-terminated). `dump`: stream the health log as
+//   BEGIN <path> <size>\n<file bytes>\nEND <bytes sent>\n
+// tools/sdlog.py drives this. While dumping, writes wait for the host
+// instead of being dropped (AV-011 drops them only when nobody is reading).
+void App::service_serial() {
+  while (Serial.available() > 0) {
+    const int c = Serial.read();
+    if (c < 0) break;
+    if (c != '\n' && c != '\r') {
+      if (cmd_len_ + 1 < sizeof(cmd_)) cmd_[cmd_len_++] = static_cast<char>(c);
+      continue;
+    }
+    cmd_[cmd_len_] = '\0';
+    const bool is_dump = std::strcmp(cmd_, "dump") == 0;
+    const bool had_cmd = cmd_len_ > 0;
+    cmd_len_ = 0;
+    if (!had_cmd) continue;
+    if (!is_dump) {
+      Serial.printf("unknown command: %s (try: dump)\n", cmd_);
+      continue;
+    }
+    Serial.setTxTimeoutMs(500);
+    Serial.printf("BEGIN %s %ld\n", config::kHealthLogPath, static_cast<long>(sd_.size(config::kHealthLogPath)));
+    const int32_t sent = sd_.dump(config::kHealthLogPath, Serial);
+    Serial.printf("\nEND %ld\n", static_cast<long>(sent));
+    Serial.flush();
+    Serial.setTxTimeoutMs(0);
+  }
 }

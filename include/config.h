@@ -51,6 +51,11 @@ constexpr uint32_t kHttpConnectTimeoutMs = 10000;
 constexpr uint16_t kHttpReadTimeoutMs = 10000;
 constexpr uint32_t kTlsHandshakeTimeoutS = 10;
 
+// ---- Panel self-heal (D-019, BUG-004)
+// Re-run the panel controller's full start-up this often, just before a
+// redraw, so a controller that reset itself (blank or half-blank) recovers.
+constexpr uint32_t kPanelReinitIntervalS = 15 * 60;
+
 // ---- Health log on the TF card (SPEC.md §Health log, AV-002)
 constexpr const char* kHealthLogPath = "/boreas/health.csv";
 constexpr uint32_t kHealthLogIntervalS = 10 * 60;

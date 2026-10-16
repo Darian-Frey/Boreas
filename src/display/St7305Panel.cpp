@@ -31,6 +31,14 @@ void St7305Panel::begin() {
   end_frame();
 }
 
+uint32_t St7305Panel::reinit() {
+  const uint32_t t0 = millis();
+  // The same start-up as begin(): U8g2 pulses RST and sends the driver's
+  // init sequence. SPI pins and clock are already configured.
+  u8g2.begin();
+  return millis() - t0;
+}
+
 U8G2& St7305Panel::canvas() { return u8g2; }
 
 u8g2_t* St7305Panel::raw() { return u8g2.getU8g2(); }

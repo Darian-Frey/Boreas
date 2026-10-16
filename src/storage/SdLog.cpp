@@ -48,3 +48,28 @@ bool SdLog::append(const char* path, const char* header, const char* line) {
   }
   return ok;
 }
+
+int32_t SdLog::dump(const char* path, Print& out) {
+  if (!mounted_ && !begin()) return -1;
+  File f = SD_MMC.open(path, FILE_READ);
+  if (!f) return -1;
+  uint8_t buf[512];
+  int32_t total = 0;
+  while (f.available()) {
+    const size_t n = f.read(buf, sizeof(buf));
+    if (n == 0) break;
+    out.write(buf, n);
+    total += static_cast<int32_t>(n);
+  }
+  f.close();
+  return total;
+}
+
+int32_t SdLog::size(const char* path) {
+  if (!mounted_ && !begin()) return -1;
+  File f = SD_MMC.open(path, FILE_READ);
+  if (!f) return -1;
+  const int32_t n = static_cast<int32_t>(f.size());
+  f.close();
+  return n;
+}

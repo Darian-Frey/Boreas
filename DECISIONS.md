@@ -335,3 +335,28 @@ Status vocabulary: Proposed | Accepted | Superseded by D-NNN | Deprecated.
 
 **Reversal conditions.** If hand-drawn artwork is wanted for the finished object (Phase 4), add XBM icons behind the same `draw_icon()` interface.
 
+### D-019 Re-initialise the panel controller every 15 minutes (self-heal)
+**Decided:** 2026-10-16
+**Recorded:** 2026-10-16
+**Status:** Accepted
+**Authors:** Shane Hartley (options proposed by Claude)
+**Related:** BUG-004, D-006, AV-006
+
+**Context.** BUG-004: three times in ~120 h the panel stopped showing new frames (frozen, blank, half blank) while the firmware kept running and redrawing. Blank and half-blank look like the ST7305 resetting itself to its unconfigured power-up state, which our per-minute writes (pixel data plus HPM/LPM) never repair. The interface is write-only, so the firmware can't detect it. The cause is still unknown.
+
+**Options.**
+- **A. Periodic full re-init.** Every N minutes, before a redraw, re-run U8g2's start-up (RST pulse + init sequence), then draw and send the frame. Chosen.
+- **B. Re-send the setup registers each frame, without reset or RAM clear.** No blank moment, but it may not clear a latched state, and it duplicates the driver's sequence by hand.
+- **C. Detect and alert a freeze** (user-marked in the health log). Gathers evidence but fixes nothing; not taken now.
+- **D. Find the cause first** (HPM-only, SD-off variants). Days per variant; remains the follow-up if A doesn't stop freezes.
+
+**Decision.** Option A every 15 min (`config::kPanelReinitIntervalS`), via `St7305Panel::reinit()`, just before a redraw. The fresh frame follows immediately.
+
+**Consequences.**
+- A controller that reset itself recovers within 15 min without a power-cycle.
+- It would not have cleared the first occurrence, which survived a reflash (also a full re-init); if that kind recurs, option D follows.
+- Re-init takes 140 ms (measured), then the usual draw, 21 ms send and 100 ms HPM hold; there may be a brief blank moment every 15 min. Whether it's visible on the panel was not yet confirmed when this was recorded.
+- U8g2's init sequence itself sends `0x38` (HPM); `end_frame()` remains the only place *our* code sends `0x38`/`0x39`.
+
+**Reversal conditions.** If the flicker is objectionable, try B. If freezes continue despite A, pursue D and revisit.
+
