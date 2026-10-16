@@ -39,12 +39,13 @@ constexpr uint32_t kNtpIntervalMs = 6UL * 60 * 60 * 1000;  // re-sync and RTC wr
 constexpr uint32_t kNtpFirstSyncTimeoutMs = 60000;        // after Wi-Fi up, flag failure if no sync
 
 // ---- Forecast fetch (F-008, SPEC.md §Scheduling and §Retry)
-// Schedule in clock seconds (app/Schedule): fetches land on aligned slots,
-// 15 s past :00/:15/:30/:45 as the interval allows.
+// Schedule in clock seconds (app/Schedule): fetches land on aligned slots
+// 7 min 15 s past the interval: :07:15 / :37:15 at 30 min. Kept off the top
+// of the hour, when Open-Meteo returned 503s during the soak (IMP-005).
 constexpr uint32_t kFetchIntervalS = 30 * 60;
 constexpr uint32_t kFetchAdvisoryIntervalS = 15 * 60;  // while UMBRELLA ADVISED
 constexpr uint32_t kFetchNightIntervalS = 60 * 60;     // night mode (F-014); wins over advisory
-constexpr uint32_t kFetchSlotOffsetS = 15;
+constexpr uint32_t kFetchSlotOffsetS = 7 * 60 + 15;
 constexpr uint32_t kFetchRetryInitialS = 60;
 constexpr uint32_t kFetchRetryCapS = 15 * 60;
 constexpr uint32_t kHttpConnectTimeoutMs = 10000;

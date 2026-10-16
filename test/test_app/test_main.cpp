@@ -6,18 +6,20 @@
 #include <initializer_list>
 
 #include "app/Schedule.h"
+#include "config.h"
 
 void setUp() {}
 void tearDown() {}
 
-// 2026-10-06, UTC.
+// 2026-10-06, UTC (values from `date -u -d ... +%s`). Slots sit 7 min 15 s
+// past the interval (IMP-005): :07:15 / :37:15 at 30 min.
 constexpr time_t k120742 = 1791288462;
-constexpr time_t k121600 = 1791288960;
-constexpr time_t k122950 = 1791289790;
-constexpr time_t k123015 = 1791289815;
-constexpr time_t k130015 = k123015 + 1800;
-constexpr time_t k124515 = k123015 + 900;
-constexpr time_t k121515 = k123015 - 900;
+constexpr time_t k122215 = 1791289335;
+constexpr time_t k122300 = 1791289380;
+constexpr time_t k123650 = 1791290210;
+constexpr time_t k123715 = 1791290235;
+constexpr time_t k125215 = 1791291135;
+constexpr time_t k130715 = 1791292035;
 
 // ---------------------------------------------------------------- Intervals
 
@@ -31,22 +33,22 @@ void test_interval_normal_advisory_night() {
 // ---------------------------------------------------------------- Alignment
 
 void test_next_slot_aligned_with_offset() {
-  TEST_ASSERT_EQUAL_INT64(k123015, schedule::next_slot(k120742, 1800));  // :00:15 / :30:15
-  TEST_ASSERT_EQUAL_INT64(k121515, schedule::next_slot(k120742, 900));   // :00:15 / :15:15 / ...
-  TEST_ASSERT_EQUAL_INT64(k123015 + 1800, schedule::next_slot(k120742, 3600));  // 13:00:15
+  TEST_ASSERT_EQUAL_INT64(k123715, schedule::next_slot(k120742, 1800));  // :07:15 / :37:15
+  TEST_ASSERT_EQUAL_INT64(k122215, schedule::next_slot(k120742, 900));   // :07:15 / :22:15 / ...
+  TEST_ASSERT_EQUAL_INT64(k130715, schedule::next_slot(k120742, 3600));  // hh:07:15
 }
 
 void test_next_slot_is_strictly_later_from_a_slot() {
   // A fetch that ran exactly on its slot schedules the following one.
-  TEST_ASSERT_EQUAL_INT64(k130015, schedule::next_slot(k123015, 1800));
-  TEST_ASSERT_EQUAL_INT64(k124515, schedule::next_slot(k123015, 900));
+  TEST_ASSERT_EQUAL_INT64(k130715, schedule::next_slot(k123715, 1800));
+  TEST_ASSERT_EQUAL_INT64(k125215, schedule::next_slot(k123715, 900));
 }
 
 void test_next_slot_skips_a_slot_closer_than_half_an_interval() {
-  // Boot fetch at 12:29:50 must not fetch again at 12:30:15, 25 s later.
-  TEST_ASSERT_EQUAL_INT64(k130015, schedule::next_slot(k122950, 1800));
-  // 12:16:00 -> 12:30:15 is 14 min 15 s, under 15 min: skip to 13:00:15.
-  TEST_ASSERT_EQUAL_INT64(k130015, schedule::next_slot(k121600, 1800));
+  // Boot fetch at 12:36:50 must not fetch again at 12:37:15, 25 s later.
+  TEST_ASSERT_EQUAL_INT64(k130715, schedule::next_slot(k123650, 1800));
+  // 12:23:00 -> 12:37:15 is 14 min 15 s, under 15 min: skip to 13:07:15.
+  TEST_ASSERT_EQUAL_INT64(k130715, schedule::next_slot(k122300, 1800));
 }
 
 void test_gap_never_exceeds_one_and_a_half_intervals() {
@@ -56,7 +58,18 @@ void test_gap_never_exceeds_one_and_a_half_intervals() {
       const time_t next = schedule::next_slot(now, interval);
       TEST_ASSERT_TRUE(next - now >= static_cast<time_t>(interval / 2));
       TEST_ASSERT_TRUE(next - now <= static_cast<time_t>(interval + interval / 2));
-      TEST_ASSERT_EQUAL_INT64(0, (next - 15) % interval);  // on a slot, 15 s past it
+      TEST_ASSERT_EQUAL_INT64(0, (next - config::kFetchSlotOffsetS) % interval);  // on a slot
+    }
+  }
+}
+
+void test_no_slot_near_the_top_of_the_hour() {
+  // IMP-005: Open-Meteo returned 503s at hh:00 in the soak, so no slot may
+  // fall in the first 5 minutes of an hour, at any interval.
+  for (uint32_t interval : {900u, 1800u, 3600u}) {
+    for (time_t now = k120742; now < k120742 + 2 * 3600; now += 7) {
+      const time_t into_hour = schedule::next_slot(now, interval) % 3600;
+      TEST_ASSERT_TRUE(into_hour >= 5 * 60);
     }
   }
 }
@@ -71,15 +84,15 @@ void test_first_fetch_is_due_immediately() {
 void test_success_schedules_aligned_slot() {
   schedule::FetchScheduler f;
   f.on_success(k120742, false, false);
-  TEST_ASSERT_EQUAL_INT64(k123015, f.next());
-  TEST_ASSERT_FALSE(f.due(k123015 - 1));
-  TEST_ASSERT_TRUE(f.due(k123015));
+  TEST_ASSERT_EQUAL_INT64(k123715, f.next());
+  TEST_ASSERT_FALSE(f.due(k123715 - 1));
+  TEST_ASSERT_TRUE(f.due(k123715));
 }
 
 void test_advisory_shortens_next_fetch() {
   schedule::FetchScheduler f;
   f.on_success(k120742, true, false);
-  TEST_ASSERT_EQUAL_INT64(k121515, f.next());
+  TEST_ASSERT_EQUAL_INT64(k122215, f.next());
 }
 
 void test_failures_back_off_per_spec() {
@@ -101,15 +114,15 @@ void test_success_resets_backoff() {
   f.on_failure(k120742 + 60);
   f.on_success(k120742 + 180, false, false);
   TEST_ASSERT_EQUAL_UINT32(0, f.failures());
-  TEST_ASSERT_EQUAL_INT64(k123015, f.next());
-  f.on_failure(k123015);
-  TEST_ASSERT_EQUAL_INT64(k123015 + 60, f.next());  // back to 1 min
+  TEST_ASSERT_EQUAL_INT64(k123715, f.next());
+  f.on_failure(k123715);
+  TEST_ASSERT_EQUAL_INT64(k123715 + 60, f.next());  // back to 1 min
 }
 
 void test_clock_jumping_backwards_does_not_stall_fetches() {
   // NTP corrects the clock back an hour; the old "next" is now 1.5 h away.
   schedule::FetchScheduler f;
-  f.on_success(k120742, false, true);  // next 13:00:15
+  f.on_success(k120742, false, true);  // next 13:07:15
   TEST_ASSERT_FALSE(f.due(k120742 - 600));  // within a plausible interval: wait
   TEST_ASSERT_TRUE(f.due(k120742 - 3 * 3600));  // implausibly far ahead: fetch now
 }
@@ -131,6 +144,7 @@ int main() {
   RUN_TEST(test_next_slot_is_strictly_later_from_a_slot);
   RUN_TEST(test_next_slot_skips_a_slot_closer_than_half_an_interval);
   RUN_TEST(test_gap_never_exceeds_one_and_a_half_intervals);
+  RUN_TEST(test_no_slot_near_the_top_of_the_hour);
   RUN_TEST(test_first_fetch_is_due_immediately);
   RUN_TEST(test_success_schedules_aligned_slot);
   RUN_TEST(test_advisory_shortens_next_fetch);

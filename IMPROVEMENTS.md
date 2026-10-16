@@ -33,16 +33,17 @@ Effort vocabulary: trivial | small | medium | large.
 **Trade-offs.** Saves about 15 s per reboot only. Small risk of reacting to a transient status during association, which would just retry 5 s sooner. The clock is unaffected, since the RTC shows the time meanwhile.
 **Notes.** 2026-10-11: after a dozen resets in an hour the router kept refusing or dropping the board for about 4 minutes (connect, drop after 25–35 s, `Association refused`) before it settled; the backoff rode it out. Failing fast would not prevent that, but it would shorten each cycle. The soak's `wifi_reconnects` column will show whether drops happen in normal running.
 
+## Applied
+
 ### IMP-005: Move fetch slots off the top of the hour
-**Status:** suggested
+**Status:** applied
 **Found:** 2026-10-16 (soak log analysis)
 **Location:** `include/config.h` (`kFetchSlotOffsetS`), `src/app/Schedule`
 **Effort:** trivial
 **Description.** Over 116 h of soak, 26 of 372 fetches (7 %) failed, all with HTTP 503 from Open-Meteo, and 21 of them at hh:00:15. None failed at the :30 slots. The service looks overloaded on the hour, when many clients poll. Retries (1, 2, 4 … min later) recovered every time, so the panel never went stale, but each failure costs a TLS handshake and a radio burst.
 **Proposal.** Change the slot offset from 15 s to a few minutes off the hour, e.g. 7 min 15 s (slots at :07:15 / :37:15, or :07:15 / :22:15 / … at 15 min). It's one constant; `test/test_app` slot expectations change accordingly.
 **Trade-offs.** Forecast data updates on Open-Meteo's own schedule, so a later poll loses nothing meaningful. Any fixed offset can still collide with other clients; a per-device random offset would spread better, but makes slots harder to reason about and to test.
-
-## Applied
+**Applied.** 2026-10-16: `kFetchSlotOffsetS` = 7 min 15 s (slots :07:15 / :37:15 at 30 min). `test/test_app` expectations moved, plus a property test that no slot falls in the first 5 minutes of an hour. To be confirmed by the fetch-failure breakdown of the next soak.
 
 ### IMP-002: Pin exact library versions after Phase 0
 **Status:** applied

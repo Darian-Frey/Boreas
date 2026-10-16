@@ -15,8 +15,9 @@ namespace schedule {
 uint32_t fetch_interval_s(bool advisory, bool night);
 
 // The first fetch slot at least half an interval after `now`. Slots are
-// UTC multiples of the interval plus config::kFetchSlotOffsetS, which are
-// also whole local quarter-hours because UK offsets are whole hours. The
+// UTC multiples of the interval plus config::kFetchSlotOffsetS (7 min 15 s,
+// off the busy top of the hour, IMP-005); UK offsets are whole hours, so the
+// minutes are the same in local time. The
 // half-interval floor stops a fetch just before a slot from triggering
 // another seconds later; the gap is therefore 0.5-1.5 intervals, always
 // under the 2x stale threshold (F-007).
