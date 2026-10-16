@@ -41,6 +41,7 @@ struct DerivedModel {
   float trace_min_c = 0.0f;
   float trace_max_c = 0.0f;
   uint8_t trace_peak = 0;     // offset from first_hour of the highest point
+  uint8_t trace_low = 0;      // offset from first_hour of the lowest point (first if tied)
   uint8_t max_prob_12h = 0;   // %
   float max_precip_12h = 0.0f;  // mm in any one hour
   uint8_t rain_segments = 0;  // 0-12, rain meter

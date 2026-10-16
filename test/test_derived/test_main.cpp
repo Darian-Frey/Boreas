@@ -214,6 +214,7 @@ void test_derive_day_values() {
   TEST_ASSERT_EQUAL_UINT8(13, d.trace_count);
   TEST_ASSERT_FLOAT_WITHIN(0.01f, 18.0f, d.trace_max_c);
   TEST_ASSERT_EQUAL_UINT8(4, d.trace_peak);
+  TEST_ASSERT_EQUAL_UINT8(12, d.trace_low);  // 10 C at +12 h
   TEST_ASSERT_FLOAT_WITHIN(0.01f, 10.0f, d.trace_min_c);  // +12 h: 14 + 8 - 12
 }
 
@@ -246,6 +247,7 @@ void test_derive_skips_past_hours() {
   TEST_ASSERT_EQUAL_UINT8(2, d.first_hour);
   TEST_ASSERT_EQUAL_UINT8(13, d.trace_count);
   TEST_ASSERT_EQUAL_UINT8(2, d.trace_peak);  // peak still at 16:00, now offset 2
+  TEST_ASSERT_EQUAL_UINT8(12, d.trace_low);  // 8 C at 02:00, the last point
 }
 
 void test_derive_umbrella_by_probability() {

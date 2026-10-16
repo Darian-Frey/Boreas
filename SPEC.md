@@ -188,8 +188,9 @@ Region x 6–255, y 200–278.
 | Title `TEMP · NEXT 12 H` | x 9, baseline 211 | `6x12_tf` |
 | Points | 13 (current hour + 12), x = 12 + 19·i (12 … 240) | from `DerivedModel::first_hour` |
 | Grid | a dot at every point column, rows 218, 226 … 258 | — |
-| Curve | 2 px polyline, scaled min→max into y 255…229 | flat data sits mid-band; top leaves room for the peak label under the title |
-| Peak | hollow 7×7 square on the highest point; value above it (`17°`), clamped inside the region | `6x12_tf` |
+| Curve | 2 px polyline, scaled min→max into y 244…227 | flat data sits mid-band; room above for the peak label (under the title) and below for the low label (above the pointer) |
+| Peak | hollow 7×7 square on the highest point; value above it (`17°`), clamped inside the region, on a cleared patch | `6x12_tf` |
+| Low | the same marker on the lowest point (`DerivedModel::trace_low`, first if tied); value **below** it, baseline point + 14 (≤ 258, clear of the pointer); omitted when the trace is flat | `6x12_tf` |
 | Now pointer | ▲ under the plot (y 260–264) at now's fraction of the first hour; only with a valid clock | — |
 | Hour labels | local hour `HH` centred under each point, baseline 274 | `6x12_tf` |
 
@@ -222,7 +223,7 @@ Wi-Fi bars from RSSI (`derived::wifi_bars`): 4 at ≥ −55 dBm, 3 at ≥ −67,
 
 ### Reference image
 
-`design/panel-reference.png` (400×300, exact panel pixels) is the Main page rendered by the host preview from the `typical` fixture: the mockup's public example data, KINGS LANGLEY, TUE 06 OCT 13:30. It is the reference for the Phase 1 photograph. Current hash: `50c160a9`. Regenerate it in the same commit as any change under `src/ui/` that alters it (BUILD.md §4).
+`design/panel-reference.png` (400×300, exact panel pixels) is the Main page rendered by the host preview from the `typical` fixture: the mockup's public example data, KINGS LANGLEY, TUE 06 OCT 13:30. It is the reference for the Phase 1 photograph. Current hash: `e291ad35`. Regenerate it in the same commit as any change under `src/ui/` that alters it (BUILD.md §4).
 
 ## Open-Meteo request
 

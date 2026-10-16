@@ -58,7 +58,7 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 **Priority:** Must
 **Acceptance:**
 - Polyline of hourly temperature for the next 12 h on a dotted grid, hour ticks beneath
-- Current-hour marker and labelled peak value
+- Current-hour marker and labelled peak and low values
 **Status:** Done 2026-10-10 — trace drawn, previewed (typical, worst across midnight, dry, no data) and on the board
 
 ### F-006 Rain probability meter

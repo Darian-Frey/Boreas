@@ -176,7 +176,10 @@ DerivedModel derive(const WeatherModel& w, const IndoorModel& in, const Pressure
   d.trace_count = static_cast<uint8_t>(points > 0 ? points : 0);
   for (int i = 0; i < points; ++i) {
     const float t = w.hourly[first + i].temp_c;
-    if (i == 0 || t < d.trace_min_c) d.trace_min_c = t;
+    if (i == 0 || t < d.trace_min_c) {
+      d.trace_min_c = t;
+      d.trace_low = static_cast<uint8_t>(i);
+    }
     if (i == 0 || t > d.trace_max_c) {
       d.trace_max_c = t;
       d.trace_peak = static_cast<uint8_t>(i);

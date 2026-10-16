@@ -20,8 +20,8 @@ constexpr int16_t kPlotX0 = 12;    // first point (current hour)
 constexpr int16_t kHourStep = 19;  // px per hour; 12 steps end at x 240
 constexpr int16_t kPlotTop = 218;
 constexpr int16_t kPlotBottom = 258;
-constexpr int16_t kCurveTop = 229;  // headroom above the curve for the peak label, clear of the title
-constexpr int16_t kCurveBottom = 255;
+constexpr int16_t kCurveTop = 227;     // headroom above for the peak label, clear of the title
+constexpr int16_t kCurveBottom = 244;  // room below for the low label, clear of the pointer
 constexpr int16_t kGridStep = 8;
 constexpr int16_t kPointerY = 260;
 constexpr int16_t kHourBaseline = 274;
@@ -33,6 +33,31 @@ int16_t point_y(float t, float lo, float hi) {
   if (hi - lo < 0.05f) return (kCurveTop + kCurveBottom) / 2;
   const float f = (t - lo) / (hi - lo);
   return static_cast<int16_t>(std::lround(kCurveBottom - f * (kCurveBottom - kCurveTop)));
+}
+
+// Marks an extreme with a hollow square and its value, above (peak) or
+// below (low) the point, on a cleared patch so the grid doesn't cross the
+// digits. The label is kept inside the trace region.
+void draw_extreme(u8g2_t* g, int16_t px, int16_t py, float value, bool above) {
+  u8g2_SetDrawColor(g, 0);
+  u8g2_DrawBox(g, px - kPeakBox / 2, py - kPeakBox / 2 + 1, kPeakBox, kPeakBox);
+  u8g2_SetDrawColor(g, 1);
+  u8g2_DrawFrame(g, px - kPeakBox / 2 - 1, py - kPeakBox / 2, kPeakBox + 2, kPeakBox + 2);
+
+  char buf[12];
+  const long v = std::lround(value);
+  snprintf(buf, sizeof(buf), "%ld\xC2\xB0", v == 0 ? 0L : v);
+  const int16_t w = text_width(g, buf);
+  int16_t lx = static_cast<int16_t>(px - w / 2);
+  if (lx < kTrace.x + kPad) lx = kTrace.x + kPad;
+  if (lx + w > kTrace.right() - kPad) lx = static_cast<int16_t>(kTrace.right() - kPad - w);
+  // Frame spans py-2 .. py+4. Digits are 7 px tall and the degree sign
+  // reaches 9 px above the baseline, so a low label sits 10 px below the frame.
+  const int16_t baseline = above ? static_cast<int16_t>(py - kPeakBox / 2 - 3) : static_cast<int16_t>(py + 14);
+  u8g2_SetDrawColor(g, 0);
+  u8g2_DrawBox(g, lx - 1, baseline - 9, w + 2, 10);
+  u8g2_SetDrawColor(g, 1);
+  u8g2_DrawUTF8(g, lx, baseline, buf);
 }
 
 }  // namespace
@@ -73,19 +98,9 @@ void draw_trace(u8g2_t* g, const PanelState& s) {
     u8g2_DrawLine(g, x0, y0 + 1, x1, y1 + 1);
   }
 
-  // Peak: hollow square and its value above, kept inside the region.
-  const int16_t px = point_x(d.trace_peak), py = point_y(hi, lo, hi);
-  u8g2_SetDrawColor(g, 0);
-  u8g2_DrawBox(g, px - kPeakBox / 2, py - kPeakBox / 2 + 1, kPeakBox, kPeakBox);
-  u8g2_SetDrawColor(g, 1);
-  u8g2_DrawFrame(g, px - kPeakBox / 2 - 1, py - kPeakBox / 2, kPeakBox + 2, kPeakBox + 2);
-  char buf[12];
-  snprintf(buf, sizeof(buf), "%ld\xC2\xB0", std::lround(hi) == 0 ? 0L : std::lround(hi));
-  const int16_t w = text_width(g, buf);
-  int16_t lx = static_cast<int16_t>(px - w / 2);
-  if (lx < kTrace.x + kPad) lx = kTrace.x + kPad;
-  if (lx + w > kTrace.right() - kPad) lx = static_cast<int16_t>(kTrace.right() - kPad - w);
-  u8g2_DrawUTF8(g, lx, static_cast<int16_t>(py - kPeakBox / 2 - 3), buf);
+  // Peak above and low below (F-005); a flat trace shows only the peak.
+  draw_extreme(g, point_x(d.trace_peak), point_y(hi, lo, hi), hi, true);
+  if (hi - lo >= 0.05f) draw_extreme(g, point_x(d.trace_low), point_y(lo, lo, hi), lo, false);
 
   // Pointer under the plot at the current time within the first hour.
   const float frac = static_cast<float>(s.now_utc - h[0].time) / 3600.0f;
@@ -95,6 +110,7 @@ void draw_trace(u8g2_t* g, const PanelState& s) {
   }
 
   // Hour labels (local), centred under each point.
+  char buf[4];
   for (int i = 0; i < n; ++i) {
     struct tm t;
     localtime_r(&h[i].time, &t);
