@@ -48,7 +48,7 @@ void draw_outdoor(u8g2_t* g, const PanelState& s) {
   const int16_t after = static_cast<int16_t>(kLeft + u8g2_GetStrWidth(g, buf) + 6);
   u8g2_DrawCircle(g, after + 4, kHeroBaseline - 44, 4, U8G2_DRAW_ALL);
   u8g2_DrawCircle(g, after + 4, kHeroBaseline - 44, 3, U8G2_DRAW_ALL);
-  u8g2_SetFont(g, fonts::kClock);
+  u8g2_SetFont(g, fonts::kUnit);
   u8g2_DrawStr(g, after + 11, kHeroBaseline - 30, "C");
 
   // Icon left, feels / high / low stacked right.

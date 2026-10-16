@@ -118,15 +118,16 @@ Changes from the pre-code table (2026-10-10): the footer moved from y = 283 to y
 
 | Role | Font | Notes |
 |---|---|---|
-| Header badge, location, date | `u8g2_font_7x14B_tr` | monospaced: a 14-character location always fits, even with the seconds clock (checked with the `worst` preview fixture) |
-| Header clock | `u8g2_font_9x15B_tr` | |
-| Tabs, labels, values | `u8g2_font_6x12_tf` | Latin-1: has `°` and `·` |
-| Tab source labels | `u8g2_font_5x7_tr` | `OPEN-METEO` doesn't fit beside `EXT · OUTDOOR` in 6×12 |
-| Footer | `u8g2_font_profont11_tr` | |
+| Header badge, location, date | `u8g2_font_7x14B_tr` | monospaced: a 14-character location always fits beside the HH:MM clock (`worst`-length name checked in the preview) |
+| Header clock | `u8g2_font_VCR_OSD_mn` | the VCR on-screen-display face; digits and colon only. HH:MM fits; an HH:MM:SS clock (D-008 seconds build, not yet implemented) would overflow the header with a 14-character location, so that build needs a narrower clock font |
+| Tabs, labels, values, footer | `u8g2_font_spleen6x12_mf` | terminal face; has `°` and `·` |
+| Tab source labels | `u8g2_font_spleen5x8_mf` | `OPEN-METEO` doesn't fit beside `EXT · OUTDOOR` in the label font |
+| Readouts | `u8g2_font_spleen8x16_mf` | has `°` (the old `7x14B` didn't) |
+| Unit `C` after the outdoor degree sign | `u8g2_font_spleen8x16_mf` | its own role, so it never borrows the clock's digits-only font |
 | Outdoor temperature | `u8g2_font_logisoso50_tn` | digits only; ≈ 52 px, meets F-002 |
 | Indoor values | `u8g2_font_logisoso24_tn` | digits only |
 
-Glyph coverage: U8g2 `_tr` fonts are ASCII only (32–127), so `°` and `·` need `_tf` variants and `u8g2_DrawUTF8`. `logisoso*_tn` has digits only, so the hero `°` is drawn as a small circle. `Δ`, `▲` and `▼` are in none of these fonts; draw them as shapes (as `ui/TestCard` does) or 12×12 XBM icons. Remaining font choices are recorded here as each region lands.
+Glyph coverage: U8g2 `_tr` fonts are ASCII only (32–127), so `°` and `·` need `_tf` variants and `u8g2_DrawUTF8`. `logisoso*_tn` has digits only, so the hero `°` is drawn as a small circle. `Δ`, `▲` and `▼` are in none of these fonts; draw them as shapes (as `ui/TestCard` does) or 12×12 XBM icons. All fonts are U8g2 built-ins, chosen by eye from the preview's `fonts-hero`, `fonts-label` and `vcr-fit` sheets (IMP-001, 2026-10-16). `VCR_OSD` (about 12×14 px per character) fits none of the other text regions, so it is used for the clock only.
 
 Icons (D-018): drawn from primitives in `ui/Icons`, 40×40 box: sun, moon, sun-cloud, moon-cloud, cloud, fog, drizzle, rain, rain-ice, snow, storm, plus a small box for unknown codes. Review sheet: `--scene icons`. Small symbols (`Δ`, `▲`, `▼`, wind arrows) are drawn the same way.
 
@@ -137,9 +138,9 @@ Content area x 6–149, y 38–198 (below the tab); left/right padding 3 px.
 | Element | Position | Font / size |
 |---|---|---|
 | Temperature, whole °C (never `-0`) | x 9, baseline 92 | `logisoso50_tn` (≈ 52 px digits, meets F-002's ≥ 48 px) |
-| Degree sign + `C` | 6 px after the digits; double circle r 4/3 at baseline − 44; `C` at baseline − 30 | drawn circle; `9x15B` |
+| Degree sign + `C` | 6 px after the digits; double circle r 4/3 at baseline − 44; `C` at baseline − 30 | drawn circle; `C` in `spleen8x16` |
 | Condition icon | x 9, y 100, 40×40 | `ui/Icons` |
-| `FEELS` / `HI` / `LO` | labels x 55, values right-aligned at x 146, rows from y 104 every 13 px | `6x12_tf` |
+| `FEELS` / `HI` / `LO` | labels x 55, values right-aligned at x 146, rows from y 104 every 13 px | `spleen6x12_mf` |
 | Dotted rule | y 150, every 3 px | — |
 | Condition text | x 9, baseline 168 | `7x14B` (≤ 16 characters) |
 
@@ -151,22 +152,22 @@ Content area x 151–270, y 38–198; left/right padding 3 px (x 154–267).
 
 | Element | Position | Font / size |
 |---|---|---|
-| `TEMP` label + value `21.4` + `°C` | baseline 64; label left, unit right-aligned at 267, value right-aligned 3 px before the unit | label/unit `6x12_tf`, value `logisoso24_tn` |
+| `TEMP` label + value `21.4` + `°C` | baseline 64; label left, unit right-aligned at 267, value right-aligned 3 px before the unit | label/unit `spleen6x12_mf`, value `logisoso24_tn` |
 | Dotted rule | y 69 | — |
 | `HUMID` label + value + `%` | baseline 96 | as above |
 | Dotted rule | y 101 | — |
-| `RH LEVEL` + `30·60` | baseline 112 | `6x12_tf` |
+| `RH LEVEL` + `30·60` | baseline 112 | `spleen6x12_mf` |
 | RH meter | 10 cells, 10×10 px, 1 px gaps, from x 156, y 116; filled up to `rh_segments` | — |
 | Comfort band bracket | under cells 4–6 (30–60 %), y 127–129 | — |
 | Dotted rule | y 133 | — |
-| `Δ IN/OUT` (drawn Δ) and `DEW`; values `+7.4°`, `9.9°` | labels baseline 145, values 158; second pair at x 214 | `6x12_tf` |
-| Comfort box | x 154, y 170, 114×22; `COMFORT · <BAND>` centred | `6x12_tf`; outlined for `NOMINAL`, **inverted** for `DRY`/`HUMID`/`COLD`/`WARM` |
+| `Δ IN/OUT` (drawn Δ) and `DEW`; values `+7.4°`, `9.9°` | labels baseline 145, values 158; second pair at x 214 | `spleen6x12_mf` |
+| Comfort box | x 154, y 170, 114×22; `COMFORT · <BAND>` centred | `spleen6x12_mf`; outlined for `NOMINAL`, **inverted** for `DRY`/`HUMID`/`COLD`/`WARM` |
 
 A failed sensor shows `--.-`, `--`, an empty meter and `COMFORT · ---`. The worst case (35.9 °C, 100 %, `+60.5°`) fits.
 
 ### READOUTS column (`ui/Readouts`, F-004)
 
-Content area x 272–393, y 38–198; left/right padding 3 px (x 275–390). Seven rows, 23 px apart from y 38. Each row has its label left and value right-aligned on baseline row top + 15, with a dotted leader (every 3 px) at row top + 19. Labels and values in `7x14B_tr`.
+Content area x 272–393, y 38–198; left/right padding 3 px (x 275–390). Seven rows, 23 px apart from y 38. Each row has its label left and value right-aligned on baseline row top + 15, with a dotted leader (every 3 px) at row top + 19. Labels and values in `spleen8x16_mf`.
 
 | Row | Value | Notes |
 |---|---|---|
@@ -185,14 +186,14 @@ Region x 6–255, y 200–278.
 
 | Element | Position | Notes |
 |---|---|---|
-| Title `TEMP · NEXT 12 H` | x 9, baseline 211 | `6x12_tf` |
+| Title `TEMP · NEXT 12 H` | x 9, baseline 211 | `spleen6x12_mf` |
 | Points | 13 (current hour + 12), x = 12 + 19·i (12 … 240) | from `DerivedModel::first_hour` |
 | Grid | a dot at every point column, rows 218, 226 … 258 | — |
 | Curve | 2 px polyline, scaled min→max into y 244…227 | flat data sits mid-band; room above for the peak label (under the title) and below for the low label (above the pointer) |
-| Peak | hollow 7×7 square on the highest point; value above it (`17°`), clamped inside the region, on a cleared patch | `6x12_tf` |
-| Low | the same marker on the lowest point (`DerivedModel::trace_low`, first if tied); value **below** it, baseline point + 14 (≤ 258, clear of the pointer); omitted when the trace is flat | `6x12_tf` |
+| Peak | hollow 7×7 square on the highest point; value above it (`17°`), clamped inside the region, on a cleared patch | `spleen6x12_mf` |
+| Low | the same marker on the lowest point (`DerivedModel::trace_low`, first if tied); value **below** it, baseline point + 14 (≤ 258, clear of the pointer); omitted when the trace is flat | `spleen6x12_mf` |
 | Now pointer | ▲ under the plot (y 260–264) at now's fraction of the first hour; only with a valid clock | — |
-| Hour labels | local hour `HH` centred under each point, baseline 274 | `6x12_tf` |
+| Hour labels | local hour `HH` centred under each point, baseline 274 | `spleen6x12_mf` |
 
 Fewer than 2 points: `NO FORECAST` centred on a cleared patch over the grid.
 
@@ -202,16 +203,16 @@ Region x 256–393, y 200–278; padding 3 px (x 259–390).
 
 | Element | Position | Notes |
 |---|---|---|
-| Title `RAIN PROB.` | right-aligned at 390, baseline 211 | `6x12_tf` |
+| Title `RAIN PROB.` | right-aligned at 390, baseline 211 | `spleen6x12_mf` |
 | Meter | 12 cells, 10×20 px, 1 px gaps, from x 259, y 217; filled to `rain_segments` | 12 h maximum probability |
-| Scale | `0` left, `100` right (`5x7`); the reading (`60 %`) centred (`6x12`), baseline ~247 | `-- %` without data |
-| Advisory box | x 259, y 252, 132×23 | `UMBRELLA ADVISED` inverted in `7x14B`; otherwise `NO UMBRELLA NEEDED` outlined in `6x12`; `NO FORECAST` without data |
+| Scale | `0` left, `100` right (`spleen5x8`); the reading (`60 %`) centred (`spleen6x12`), baseline ~247 | `-- %` without data |
+| Advisory box | x 259, y 252, 132×23 | `UMBRELLA ADVISED` inverted in `7x14B`; otherwise `NO UMBRELLA NEEDED` outlined in `spleen6x12`; `NO FORECAST` without data |
 
 The neutral line is fixed until F-015 adds the rotating one-liners. Its wording follows the umbrella rule: at, say, 40 % "no rain expected" would be wrong, but "no umbrella needed" is what the rule actually decides.
 
 ### Footer (`ui/Footer`, F-007)
 
-Region x 6–393, y 280–293; padding 3 px (x 9–390); text in `6x12_tf`, vertically centred.
+Region x 6–393, y 280–293; padding 3 px (x 9–390); text in `spleen6x12_mf`, vertically centred.
 
 | Part | Content |
 |---|---|
@@ -223,7 +224,7 @@ Wi-Fi bars from RSSI (`derived::wifi_bars`): 4 at ≥ −55 dBm, 3 at ≥ −67,
 
 ### Reference image
 
-`design/panel-reference.png` (400×300, exact panel pixels) is the Main page rendered by the host preview from the `typical` fixture: the mockup's public example data, KINGS LANGLEY, TUE 06 OCT 13:30. It is the reference for the Phase 1 photograph. Current hash: `e291ad35`. Regenerate it in the same commit as any change under `src/ui/` that alters it (BUILD.md §4).
+`design/panel-reference.png` (400×300, exact panel pixels) is the Main page rendered by the host preview from the `typical` fixture: the mockup's public example data, KINGS LANGLEY, TUE 06 OCT 13:30. It is the reference for the Phase 1 photograph. Current hash: `d09885fa`. Regenerate it in the same commit as any change under `src/ui/` that alters it (BUILD.md §4).
 
 ## Open-Meteo request
 

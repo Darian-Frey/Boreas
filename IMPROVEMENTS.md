@@ -13,8 +13,10 @@ Effort vocabulary: trivial | small | medium | large.
 
 ## Suggested
 
+## Applied
+
 ### IMP-001: Custom bitmap fonts via `bdfconv` for the badge and big numerals
-**Status:** suggested
+**Status:** applied
 **Found:** 2026-10-10 (documentation scaffolding)
 **Location:** `src/ui/fonts.h`, `assets/fonts/`
 **Effort:** medium
@@ -22,8 +24,7 @@ Effort vocabulary: trivial | small | medium | large.
 **Proposal.** Convert chosen open-licence BDF fonts with U8g2's `bdfconv` restricted to the glyph ranges used (`0-9 . - ° % : /` and caps), commit the generated `.c` arrays under `assets/fonts/`.
 **Trade-offs.** Flash cost (small, with restricted ranges); a licence check per font; with D-016's host preview these fonts render exactly, so no preview gap. Do this only after the Phase 1 font pass shows the built-ins fall short.
 **Notes.** Depends on D-005. Record the final font set in SPEC.md §Layout.
-
-## Applied
+**Applied.** 2026-10-16, with U8g2 built-ins rather than converted BDF fonts, so there was no conversion step or licence work. The preview's `fonts-hero` and `fonts-label` sheets compared candidates; `vcr-fit` measured `VCR_OSD` against every text region. Rejected: `7Segments_26x42` (no minus or decimal point, 42 px < F-002's 48), `7_Seg_41x21` (broken metrics), `spleen32x64` for the numerals (thin strokes, fixed-width decimal point gaps), `VCR_OSD` beyond the clock (about 12 px per character; fits none of the 12 regions). Chosen hybrid, approved on the panel: `logisoso50`/`24` numerals kept, `VCR_OSD_mn` header clock, `spleen6x12_mf` labels/footer, `spleen5x8_mf` tab sources, `spleen8x16_mf` readouts. Reference image regenerated (`d09885fa`).
 
 ### IMP-004: Fail a Wi-Fi attempt as soon as the driver reports it, not after the 15 s timeout
 **Status:** applied

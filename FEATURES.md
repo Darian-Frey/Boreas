@@ -143,7 +143,7 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 **Acceptance:**
 - Header clock shows HH:MM:SS, updated every second, with the panel held in HPM
 **Status:** Not started
-**Notes:** Conflicts with F-011's LPM strategy and with battery life; see D-008. Likely mains-only.
+**Notes:** Conflicts with F-011's LPM strategy and with battery life; see D-008. Likely mains-only. The header clock font (`VCR_OSD`, IMP-001) is too wide for HH:MM:SS beside a 14-character location; this build needs a narrower clock font or a shorter location limit.
 
 ### F-017 Spoken advisory on KEY long-press
 **Priority:** Won't (this version)
