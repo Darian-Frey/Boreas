@@ -68,3 +68,26 @@ struct WeatherModel {
   HourlyForecast hourly[kHourlyRows];
   uint8_t hourly_count = 0;
 };
+
+// ---- Met Office severe weather warnings (F-019, D-021).
+
+enum class WarningLevel : uint8_t { kNone, kYellow, kAmber, kRed };
+
+constexpr int kMaxWarnings = 4;
+constexpr int kHazardChars = 24;
+
+struct Warning {
+  WarningLevel level = WarningLevel::kNone;
+  char hazard[kHazardChars] = "";  // upper case, e.g. "WIND" or "RAIN, WIND"
+  time_t start = 0;                // UTC; 0 if the feed gave no validity window
+  time_t end = 0;
+};
+
+// Warnings for the configured area only (locations::kWarningArea).
+struct WarningModel {
+  bool valid = false;      // at least one feed parsed successfully
+  time_t fetched_utc = 0;
+  uint8_t count = 0;
+  Warning items[kMaxWarnings];
+};
+

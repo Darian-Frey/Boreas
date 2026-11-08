@@ -180,12 +180,25 @@ bool App::service_fetch(time_t now) {
     ++fetch_fail_;
     log_health("fetch_fail", last_fetch_.error);
   }
+  fetch_warnings(done);
   Serial.printf("fetch %lu: %s (http %d, %lu ms) %s | heap free %lu, min ever %lu | next in %ld s%s\n",
                 static_cast<unsigned long>(fetch_count_), last_fetch_.ok ? "OK" : "FAIL", last_fetch_.http_status,
                 static_cast<unsigned long>(last_fetch_.elapsed_ms), last_fetch_.error,
                 static_cast<unsigned long>(ESP.getFreeHeap()), static_cast<unsigned long>(ESP.getMinFreeHeap()),
                 static_cast<long>(fetch_schedule_.next() - done), advisory_ ? " (umbrella: 15 min)" : "");
   return true;
+}
+
+// Met Office warnings for the configured area (F-019), in the forecast slot.
+void App::fetch_warnings(time_t now) {
+  if (warnings_tried_ != 0 && now - warnings_tried_ < static_cast<time_t>(config::kWarningsIntervalS)) return;
+  warnings_tried_ = now;
+  const WarningsClient::Result r =
+      warnings_.fetch(locations::kWarningRegion, locations::kWarningArea, now, state_.warnings);
+  Serial.printf("warnings: %s (http %d, %lu bytes, %lu ms) %s | %u for the area\n", r.ok ? "OK" : "FAIL",
+                r.http_status, static_cast<unsigned long>(r.bytes), static_cast<unsigned long>(r.elapsed_ms),
+                r.error, static_cast<unsigned>(state_.warnings.count));
+  if (!r.ok) log_health("warn_fail", r.error);
 }
 
 void App::read_sensors() {
@@ -204,7 +217,21 @@ void App::update_state(time_t now) {
   s.last_fetch_utc = s.weather.valid ? s.weather.fetched_utc : 0;
   s.next_fetch_utc = fetch_schedule_.next();
   s.derived = derived::derive(s.weather, s.indoor, pressure_, now, schedule::fetch_interval_s(advisory_, kNightMode));
+  s.derived.warning = derived::select_warning(s.warnings, now, &s.derived.warning_active);
   s.last_error = last_fetch_.ok ? "" : last_fetch_.error;
+
+  // Health log: one line whenever the warning on the panel changes.
+  char shown[sizeof(warning_logged_)] = "none";
+  if (s.derived.warning >= 0) {
+    static const char* const kLevel[] = {"", "yellow", "amber", "red"};
+    const Warning& w = s.warnings.items[s.derived.warning];
+    snprintf(shown, sizeof(shown), "%s %s %s", kLevel[static_cast<int>(w.level)], w.hazard,
+             s.derived.warning_active ? "now" : "soon");
+  }
+  if (std::strcmp(shown, warning_logged_) != 0) {
+    if (warning_logged_[0] != '\0' || std::strcmp(shown, "none") != 0) log_health("warning", shown);
+    snprintf(warning_logged_, sizeof(warning_logged_), "%s", shown);
+  }
 }
 
 void App::redraw() {

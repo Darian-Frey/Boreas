@@ -5,7 +5,7 @@
 
 # Boreas MS-42
 
-Boreas MS-42 is a cassette-futurism weather station for the wall or desk: a single-day Celsius forecast for a configured location alongside live indoor temperature and humidity, rendered as a 1-bit instrument panel on a 4.2" reflective LCD. It runs on the Waveshare ESP32-S3-RLCD-4.2 board (ESP32-S3, 300×400 ST7305 RLCD, SHTC3 sensor, PCF85063 RTC, 18650 cell) and fetches its forecast from Open-Meteo over Wi-Fi. The name is Boreas, the north wind; *MS* for Met Station; *42* for the 4.2" panel and for the answer to the ultimate question.
+Boreas MS-42 is a cassette-futurism weather station for the wall or desk: a single-day Celsius forecast for a configured location alongside live indoor temperature and humidity, rendered as a 1-bit instrument panel on a 4.2" reflective LCD. It runs on the Waveshare ESP32-S3-RLCD-4.2 board (ESP32-S3, 300×400 ST7305 RLCD, SHTC3 sensor, PCF85063 RTC, 18650 cell) and fetches its forecast from Open-Meteo, and Met Office severe weather warnings for its area, over Wi-Fi. The name is Boreas, the north wind; *MS* for Met Station; *42* for the 4.2" panel and for the answer to the ultimate question.
 
 The project began as a Raspberry Pi Zero WH + Pimoroni Inky pHAT e-ink design; that lineage is preserved in [DECISIONS.md](DECISIONS.md) D-001. The physical object is intended to sit in the same product family as the Ferrolux RS-1.
 
@@ -65,3 +65,5 @@ Boreas/
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+Forecast data: [Open-Meteo](https://open-meteo.com) (CC BY 4.0). Weather warnings: Met Office National Severe Weather Warnings, © Crown copyright (F-019).

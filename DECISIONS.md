@@ -384,3 +384,28 @@ Status vocabulary: Proposed | Accepted | Superseded by D-NNN | Deprecated.
 
 **Reversal conditions.** If TE turns out to keep pulsing while the panel is blank, or to drop out on a healthy panel, revise the detection.
 
+### D-021 Met Office regional RSS for weather warnings
+**Decided:** 2026-11-08
+**Recorded:** 2026-11-08
+**Status:** Accepted
+**Authors:** Shane Hartley (proposed by Claude)
+**Related:** D-004, D-017, F-019, AV-009
+
+**Context.** Storms in the UK prompted F-019: show official severe weather warnings on the panel. Open-Meteo (D-004) carries no warnings for the UK. The Met Office publishes its National Severe Weather Warnings as small RSS feeds, one per region (16 codes, e.g. `ee`, `sw`) plus a UK-wide one, with no API key. Each item names the level and hazard in its title, and lists the affected local authorities and the validity window (UK local time, no year) in its description.
+
+**Options.**
+- **A. Met Office regional RSS**, filtered to one configured area. Official, no key, 0.6–2 KB per region. Chosen.
+- **B. Met Office DataHub / Weather DataHub warnings.** Needs an account and API key; more structure than needed.
+- **C. Meteoalarm (EUMETNET) CAP feed for the UK.** Mirrors the Met Office, but larger, Atom/CAP, and an extra party between us and the source.
+- **D. UK-wide RSS.** ~8 KB with every region's areas; the regional feed is a strict subset for our area.
+
+**Decision.** Option A. The region code and the area name live beside the forecast location in the git-ignored `include/locations.h` (`kWarningRegion`, `kWarningArea`). `WarningsClient` fetches the feed in the forecast slot when the last attempt is ≥ 25 min old, over TLS verified with the built-in CA bundle (D-017), with the same timeouts as the forecast, into a 12 KB static buffer. `WarningsParse.h` is pure and host-tested. Open-Meteo stays the only forecast source; D-004 is unchanged.
+
+**Consequences.**
+- A second HTTPS request every 30 min (~1.5 s, ~1.5 KB). Its failure never touches the forecast or the stale flag.
+- Area matching is by name, so a council rename or a feed that switches to districts would silently drop our area: the health log records the warning shown, so a storm with nothing logged is the hint.
+- The feed's times have no year; the parser picks the year nearest to now (the December→January case is tested) and applies the UK DST rule.
+- A cancelled warning disappears at the next successful fetch; while fetches fail, warnings expire at their own end time.
+- Crown copyright data: attribution in the README.
+
+**Reversal conditions.** If the RSS feed is withdrawn or its format changes, move to B.

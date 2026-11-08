@@ -21,4 +21,12 @@ constexpr Location kLocations[] = {
 
 constexpr const Location& kHome = kLocations[0];
 
+// Met Office severe weather warnings (F-019, D-021). kWarningRegion is the
+// regional feed code (ee, se, sw, wm, em, nw, ne, yh, wl, ni, st, ta, dg, gr,
+// he, os: SPEC.md §Met Office warnings); kWarningArea must match one entry
+// of the feed's area list exactly (any case), usually the county or unitary
+// authority.
+constexpr const char* kWarningRegion = "ee";
+constexpr const char* kWarningArea = "Hertfordshire";
+
 }  // namespace locations

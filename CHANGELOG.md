@@ -4,6 +4,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 
 ## [Unreleased]
 ### Added
+- Met Office weather warnings in the advisory box (F-019, D-021): `net/WarningsClient` + pure `net/WarningsParse.h`, `derived::select_warning`, two-line amber/red inverted or yellow outlined display, `warn_fail`/`warning` health-log events, `test/test_warnings` (14 tests), preview fixtures `warn-amber`/`warn-yellow`/`warn-red`. `locations.h` gains `kWarningRegion` and `kWarningArea`: copy them from `locations.example.h`.
 - Documentation scaffolding per the development documentation standard: README, FEATURES (F-001–F-018), ROADMAP (Phases 0–4), ARCHITECTURE, DECISIONS (D-001–D-014), SPEC, ATTACK_VECTORS (AV-001–AV-010), BUGS, IMPROVEMENTS (IMP-001–IMP-003), BUILD, CLAUDE, LICENSE.
 - Panel mockup at 4× scale (`design/panel-mockup.png`); a style reference, superseded as the layout reference by `panel-reference.png` (BUG-001).
 - `platformio.ini` (pioarduino, ESP32-S3 N16R8, `boreas` and `bringup` environments), `include/pins.h`, `include/secrets.example.h`.

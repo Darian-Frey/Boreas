@@ -52,6 +52,12 @@ constexpr uint32_t kHttpConnectTimeoutMs = 10000;
 constexpr uint16_t kHttpReadTimeoutMs = 10000;
 constexpr uint32_t kTlsHandshakeTimeoutS = 10;
 
+// Met Office warnings (F-019, D-021): fetched in the forecast slot when the
+// last attempt is at least this old, so every 30 min (not every 15 min while
+// an umbrella is advised); a failure waits for the next slot.
+constexpr uint32_t kWarningsIntervalS = 25 * 60;
+constexpr uint32_t kWarningsBufferBytes = 12 * 1024;
+
 // ---- Panel heartbeat (D-020, BUG-004)
 // The panel's TE line pulses at 1 Hz in LPM and ~33 Hz in HPM. No pulse for
 // this long means the panel has died: log it and try a re-init, repeating

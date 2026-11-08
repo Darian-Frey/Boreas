@@ -160,6 +160,17 @@ One user: Shane, glancing at a wall or desk panel to decide whether to take a co
 **Status:** Not started
 **Notes:** Concept render in `design/`. Gel choice recorded in D-012.
 
+### F-019 Met Office weather warnings
+**Priority:** Should
+**Acceptance:**
+- Met Office National Severe Weather Warnings fetched from the configured regional feed every 30 min, in the forecast slot (D-021)
+- Only warnings whose area list names the configured area (`locations::kWarningArea`, whole entry, any case) are kept
+- A warning in force, or starting within 12 h, replaces the umbrella line in the advisory box: red > amber > yellow, then in force over to come, then earliest start
+- Two lines: level and hazard (`AMBER WIND`; several hazards joined with `+`, cut back to whole hazards with a trailing `+` if too wide), then `UNTIL TUE 06:00` while in force or `FROM SUN 18:00` before it starts, in local time. Inverted for amber and red, outlined for yellow
+- A failed warnings fetch keeps the last good warnings (each still expires at its end time) and logs `warn_fail`; the forecast is unaffected
+**Status:** Done on the host 2026-11-08: parser and selection tested (`test/test_warnings`), previewed (`warn-amber`, `warn-yellow`, `warn-red`), board build clean. Not yet flashed
+**Notes:** Added after the November 2026 storms. Crown copyright data; attribution in README.
+
 ## Candidate features (uncommitted)
 
 - Pressure history sparkline from the last 24 h of fetched values, stored in RTC memory across deep sleep

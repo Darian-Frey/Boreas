@@ -210,6 +210,8 @@ Region x 256–393, y 200–278; padding 3 px (x 259–390).
 | Scale | `0` left, `100` right (`spleen5x8`); the reading (`60 %`) centred (`spleen6x12`), baseline ~247 | `-- %` without data |
 | Advisory box | x 259, y 252, 132×23 | `UMBRELLA ADVISED` inverted in `7x14B`; otherwise `NO UMBRELLA NEEDED` outlined in `spleen6x12`; `NO FORECAST` without data |
 
+**Warning (F-019)** — `derived::select_warning` picks one warning from `PanelState::warnings` that is in force or starts within 12 h (`kWarningLookaheadS`): highest level, then in force over to come, then earliest start. It replaces the umbrella line in the same box. Line 1 (`spleen6x12`, baseline box top + 11): level and hazard, `AMBER WIND`; several hazards joined with `+` and cut back to whole hazards with a trailing `+` if wider than 126 px (`YELLOW THUNDERSTORMS+`). Line 2 (`spleen5x8`, baseline box top + 20): `UNTIL TUE 06:00` while in force, `FROM SUN 18:00` before, local time. Amber and red: box filled, text white. Yellow: outlined. Previews: `warn-amber`, `warn-yellow`, `warn-red`.
+
 The neutral line is fixed until F-015 adds the rotating one-liners. Its wording follows the umbrella rule: at, say, 40 % "no rain expected" would be wrong, but "no umbrella needed" is what the rule actually decides.
 
 ### Footer (`ui/Footer`, F-007)
@@ -286,6 +288,14 @@ The ArduinoJson filter keeps only the requested fields. Every value is type-chec
 
 Night variants (sun → moon) chosen when current time is outside sunrise–sunset.
 
+## Met Office warnings (F-019, D-021)
+
+- **Request**: `GET https://www.metoffice.gov.uk/public/data/PWSCache/WarningsRSS/Region/<kWarningRegion>`, TLS with the CA bundle (D-017), the forecast's connect/handshake/read timeouts, HTTP/1.0, body into a 12 KB static buffer (`kWarningsBufferBytes`; over that is an error).
+- **Region codes**: `ee` East of England, `se` London & South East, `sw` South West, `wm` West Midlands, `em` East Midlands, `nw` North West, `ne` North East, `yh` Yorkshire & Humber, `wl` Wales, `ni` Northern Ireland, `st` Strathclyde, `ta` Central/Tayside/Fife, `dg` SW Scotland/Lothian/Borders, `gr` Grampian, `he` Highlands & Eilean Siar, `os` Orkney & Shetland. All verified 200 on 2026-11-08.
+- **When**: in each forecast slot, after the forecast fetch, if the last warnings attempt is ≥ 25 min old (`kWarningsIntervalS`); so every 30 min, also while the forecast runs at 15 min. A failure waits for the next slot and logs `warn_fail`.
+- **Parse** (`net/WarningsParse.h`): the response must contain `<channel>` and `</channel>`, else the model is untouched. Each `<item>`: title `<Level> warning of <hazard(s)> affecting <region>`; description `…: <area>, <area>, … valid from HHMM Ddd DD Mon to HHMM Ddd DD Mon`. Kept if one comma-separated area equals `kWarningArea` (whole entry, any case). Level from the title's first word; hazard upper-cased; times UK local → UTC with the BST rule (last Sunday of March/October, 01:00 UTC), year chosen nearest to now. Entities `&amp; &lt; &gt; &quot; &apos; &#39;` decoded. Up to 4 warnings (`kMaxWarnings`). A complete feed with no matching items clears the warnings.
+- **Display**: §Rain meter and advisory.
+
 ## Derived values (`data/Derived`)
 
 - **Dew point** (Magnus, outdoor or indoor): `γ = ln(RH/100) + 17.62·T/(243.12+T)`; `Td = 243.12·γ/(17.62−γ)`. RH is clamped to ≥ 1 % (no `ln 0`).
@@ -342,6 +352,8 @@ Columns: `utc,local,uptime_s,event,free_heap,min_free_heap,max_block,fetch_ok,fe
 | `wifi_down` | link lost | `reason=R rssi=X` (ESP-IDF disconnect reason; last RSSI while connected) |
 | `wifi_fail` | a reconnect attempt failed | `reason=R` (0 = timed out with no driver report) |
 | `wifi_up` | link back after a drop | `after=Ns attempts=N` |
+| `warn_fail` | each failed warnings fetch (F-019) | the error |
+| `warning` | the warning on the panel changes | `amber WIND now`, `yellow FOG soon`, or `none` when it ends |
 
 `utc` is 0 and `local` is `-` until the clock is trusted (e.g. after a power-on with no RTC backup cell, until NTP).
 

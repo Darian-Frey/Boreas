@@ -104,7 +104,7 @@ Libraries from the demo zip's `Arduino/libraries` (LVGL 8.3.11 **or** 9.3.0 — 
 
 ```bash
 cp include/secrets.example.h include/secrets.h       # edit SSID/password
-cp include/locations.example.h include/locations.h   # set your forecast location
+cp include/locations.example.h include/locations.h   # set your forecast location and warnings area
 pio run                                           # compile
 pio run -t upload                                 # flash
 pio device monitor                                # 115200 baud, Ctrl-C to exit
@@ -123,7 +123,7 @@ pio run -e preview
 
 It prints a hash of the canvas. The board prints the same hash for the same scene (`preview check:` on serial at boot while the scaffold is in place), which proves the two builds draw identical pixels. Verified 2026-10-10: `025ad6cf` on both.
 
-Scenes: `test`, `frame`, `main`, `icons`, `feels-oneline`, and the font sheets `fonts-hero`, `fonts-label`, `vcr-fit` (IMP-001). Fixtures: `typical`, `worst`, `dry`, `stale`, `unset`.
+Scenes: `test`, `frame`, `main`, `icons`, `feels-oneline`, and the font sheets `fonts-hero`, `fonts-label`, `vcr-fit` (IMP-001). Fixtures: `typical`, `worst`, `dry`, `stale`, `unset`, and the F-019 warnings `warn-amber`, `warn-yellow`, `warn-red`.
 
 **Reference image:** when a change under `src/ui/` alters the Main page, regenerate the reference in the same commit and update its hash in SPEC.md §Layout:
 

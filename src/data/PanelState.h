@@ -32,6 +32,7 @@ struct PanelState {
 
   // Models and the values derived from them
   WeatherModel weather;
+  WarningModel warnings;  // Met Office warnings for the configured area (F-019)
   IndoorModel indoor;
   BatteryModel battery;
   DerivedModel derived;

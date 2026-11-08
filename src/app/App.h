@@ -14,6 +14,7 @@
 #include "display/St7305Panel.h"
 #include "net/MeteoClient.h"
 #include "net/NtpSync.h"
+#include "net/WarningsClient.h"
 #include "net/WiFiMgr.h"
 #include "sensors/Battery.h"
 #include "sensors/Rtc.h"
@@ -30,6 +31,7 @@ class App {
  private:
   void read_sensors();
   bool service_fetch(time_t now);
+  void fetch_warnings(time_t now);
   void update_state(time_t now);
   void redraw();
   int64_t current_minute() const;
@@ -46,6 +48,7 @@ class App {
   WiFiMgr wifi_;
   NtpSync ntp_;
   MeteoClient meteo_;
+  WarningsClient warnings_;
   SdLog sd_;
 
   // The one PanelState (CLAUDE.md invariant). Its models are the live
@@ -56,6 +59,8 @@ class App {
   PressureHistory pressure_;
   MeteoClient::Result last_fetch_;
   RtcReading rtc_reading_;
+  time_t warnings_tried_ = 0;  // last warnings attempt (UTC), 0 = never
+  char warning_logged_[40] = "";  // last selected warning written to the health log
   bool clock_valid_ = false;  // system clock set from a trusted RTC (D-015) or NTP
   bool advisory_ = false;     // UMBRELLA ADVISED in the latest data: 15 min fetches
   uint32_t fetch_count_ = 0;

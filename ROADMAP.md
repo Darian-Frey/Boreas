@@ -36,6 +36,7 @@ Phases are append-only. Mark Complete with an ISO date.
 - [ ] F-009 power-cycle criterion — fit an MS621FE rechargeable cell to the RTC's PH1.0 header. Without it the RTC loses time at every power-off (seen at each soak power-on), so the clock waits for NTP
 - [ ] CI — GitHub Actions on every push: firmware build (example `secrets.h`/`locations.h`), `pio test -e native`, preview build with the reference-hash check, no `String`/`new` under `src/ui/`. AV-001 and AV-002 already rely on it
 - [ ] Photograph the panel and compare with `design/panel-reference.png`
+- [ ] F-019 Met Office warnings — done on the host 2026-11-08 (D-021; parser and selection tested, previewed, board build clean); flash after the 18650 + USB soak and watch the `warning` log lines
 **Acceptance:** All Must features pass their acceptance criteria; soak log clean; a photograph of the panel matching `design/panel-reference.png` (generated, D-016) within reason.
 
 ## Phase 2 — Resilience and pages

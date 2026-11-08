@@ -2,6 +2,7 @@
 // location never appears here.
 #pragma once
 
+#include <cstdio>
 #include <cstring>
 
 #include "data/Derived.h"
@@ -32,6 +33,7 @@ inline void finish(PanelState& s, float prior_hpa = 0.0f) {
   if (prior_hpa > 0.0f) p.add(s.weather.current.time - 3 * 3600, prior_hpa);
   if (s.weather.valid) p.add(s.weather.current.time, s.weather.current.pressure_hpa);
   s.derived = derived::derive(s.weather, s.indoor, p, s.now_utc, 1800);
+  s.derived.warning = derived::select_warning(s.warnings, s.now_utc, &s.derived.warning_active);
 }
 
 }  // namespace detail
@@ -130,11 +132,49 @@ inline PanelState unset() {
   return s;
 }
 
+// Met Office warnings (F-019). Amber wind in force until Wed 06:00 BST,
+// with a yellow rain warning behind it that loses on level.
+inline void add_warning(PanelState& s, WarningLevel level, const char* hazard, time_t start, time_t end) {
+  WarningModel& m = s.warnings;
+  m.valid = true;
+  m.fetched_utc = s.now_utc - 300;
+  Warning& w = m.items[m.count++];
+  w.level = level;
+  std::snprintf(w.hazard, sizeof(w.hazard), "%s", hazard);
+  w.start = start;
+  w.end = end;
+}
+
+inline PanelState warn_amber() {
+  PanelState s = typical();
+  add_warning(s, WarningLevel::kYellow, "RAIN", s.now_utc - 3600, s.now_utc + 6 * 3600);
+  add_warning(s, WarningLevel::kAmber, "WIND", s.now_utc - 7200, 1791349200);  // Wed 07 Oct 06:00 BST
+  detail::finish(s, 1010.5f);
+  return s;
+}
+
+// Yellow thunderstorms, rain and wind starting this evening: outlined, FROM,
+// and the widest hazard text the box has to fit.
+inline PanelState warn_yellow() {
+  PanelState s = dry();
+  add_warning(s, WarningLevel::kYellow, "THUNDERSTORMS, RAIN, WIND", 1791309600, 1791352800);  // 19:00-07:00
+  detail::finish(s, 1009.4f);
+  return s;
+}
+
+inline PanelState warn_red() {
+  PanelState s = worst();
+  add_warning(s, WarningLevel::kRed, "THUNDERSTORMS", s.now_utc - 600, s.now_utc + 5 * 3600);
+  detail::finish(s, 1030.0f);
+  return s;
+}
+
 struct Named {
   const char* name;
   PanelState (*make)();
 };
 
-constexpr Named kAll[] = {{"typical", typical}, {"worst", worst}, {"dry", dry}, {"stale", stale}, {"unset", unset}};
+constexpr Named kAll[] = {{"typical", typical}, {"worst", worst}, {"dry", dry}, {"stale", stale}, {"unset", unset},
+                         {"warn-amber", warn_amber}, {"warn-yellow", warn_yellow}, {"warn-red", warn_red}};
 
 }  // namespace fixtures

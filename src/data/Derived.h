@@ -46,6 +46,11 @@ struct DerivedModel {
   float max_precip_12h = 0.0f;  // mm in any one hour
   uint8_t rain_segments = 0;  // 0-12, rain meter
   bool umbrella = false;      // UMBRELLA ADVISED (F-006)
+
+  // Met Office warning shown in the advisory box (F-019): index into
+  // PanelState::warnings.items, or -1 for none.
+  int8_t warning = -1;
+  bool warning_active = false;  // in force now (else starts within the look-ahead)
 };
 
 namespace derived {
@@ -72,6 +77,12 @@ bool is_stale(const WeatherModel& w, time_t now_utc, uint32_t fetch_interval_s);
 // Wi-Fi signal bars for the footer (SPEC.md §Footer): 4 at >= -55 dBm,
 // 3 >= -67, 2 >= -75, 1 >= -85, else 0. Pass 0 bars when the link is down.
 uint8_t wifi_bars(int8_t rssi_dbm);
+
+// The warning to show (F-019): in force now, or starting within
+// kWarningLookaheadS. Highest level wins; then one in force over one to
+// come; then the earliest start. Returns an index or -1.
+constexpr time_t kWarningLookaheadS = 12 * 3600;
+int8_t select_warning(const WarningModel& w, time_t now_utc, bool* active);
 
 // Everything at once. `pressure` should already contain the latest sample.
 DerivedModel derive(const WeatherModel& weather, const IndoorModel& indoor, const PressureHistory& pressure,

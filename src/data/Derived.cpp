@@ -188,4 +188,32 @@ DerivedModel derive(const WeatherModel& w, const IndoorModel& in, const Pressure
   return d;
 }
 
+int8_t select_warning(const WarningModel& m, time_t now_utc, bool* active) {
+  int8_t best = -1;
+  bool best_active = false;
+  if (m.valid) {
+    for (int i = 0; i < m.count && i < kMaxWarnings; ++i) {
+      const Warning& w = m.items[i];
+      if (w.level == WarningLevel::kNone) continue;
+      if (w.end != 0 && w.end <= now_utc) continue;                        // over
+      if (w.start != 0 && w.start > now_utc + kWarningLookaheadS) continue;  // too far ahead
+      const bool in_force = w.start == 0 || w.start <= now_utc;
+      if (best >= 0) {
+        const Warning& b = m.items[best];
+        if (w.level != b.level) {
+          if (w.level < b.level) continue;
+        } else if (in_force != best_active) {
+          if (!in_force) continue;
+        } else if (w.start >= b.start) {
+          continue;
+        }
+      }
+      best = static_cast<int8_t>(i);
+      best_active = in_force;
+    }
+  }
+  if (active) *active = best_active;
+  return best;
+}
+
 }  // namespace derived
