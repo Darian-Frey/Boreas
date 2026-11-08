@@ -25,7 +25,7 @@ Authoritative technical reference. Constants here are the single source of truth
 | LCD SCLK | 11 | Waveshare schematic (`LCD_SCL`) |
 | LCD MOSI | 12 | Waveshare schematic (`LCD_SDA`) |
 | LCD DC | 5 | Waveshare schematic (`LCD_RS`) |
-| LCD TE | 6 | Waveshare schematic (`LCD_TE`); tearing-effect output, unused |
+| LCD TE | 6 | Waveshare schematic (`LCD_TE`); tearing-effect output from the panel, enabled by the init sequence (`0x35 0x00`). Verified 2026-11-08: silent before init, 33–34.5 Hz in HPM, 1.0 Hz in LPM, so a live panel never goes > ~1 s without a pulse. Candidate heartbeat for BUG-004 |
 | LCD CS | 40 | Waveshare schematic |
 | LCD RST | 41 | Waveshare schematic |
 | LCD backlight | — | none; panel is reflective |

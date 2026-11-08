@@ -8,6 +8,8 @@
 //   5. BOOT / KEY / location button press and release
 //   6. U8g2 ST7305 test card, written in HPM then dropped to LPM
 //   7. TF card over SDMMC 1-bit: mount (never format), write/read/delete a test file
+//   8. Panel TE (tearing-effect) line on GPIO6: pulse rate in HPM and LPM, a
+//      candidate heartbeat for detecting a dead panel (BUG-004)
 //
 // The RTC and SHTC3 are driven with raw I2C rather than SensorLib, so a
 // failure here points at the hardware, not a library API.
@@ -20,6 +22,8 @@
 #include <SPI.h>
 #include <U8g2lib.h>
 #include <Wire.h>
+
+#include <atomic>
 
 #include "pins.h"
 
@@ -289,6 +293,37 @@ void test_sd_card() {
   SD_MMC.end();
 }
 
+// ---------------------------------------------------------------- Panel TE
+
+// The ST7305 pulses TE once per refresh when enabled (the init sequence
+// sends 0x35 0x00). Counted on both edges so a short pulse can't be missed;
+// rate reported as pulses (rising edges) per second.
+std::atomic<uint32_t> te_rising{0};
+std::atomic<uint32_t> te_falling{0};
+
+void IRAM_ATTR on_te_edge() {
+  if (digitalRead(pins::kLcdTe))
+    te_rising.fetch_add(1, std::memory_order_relaxed);
+  else
+    te_falling.fetch_add(1, std::memory_order_relaxed);
+}
+
+void te_begin() {
+  pinMode(pins::kLcdTe, INPUT);
+  attachInterrupt(digitalPinToInterrupt(pins::kLcdTe), on_te_edge, CHANGE);
+}
+
+// Counts TE pulses over `ms`, prints the rate with a label, returns pulses.
+uint32_t te_measure(const char* label, uint32_t ms) {
+  const uint32_t r0 = te_rising.load(), f0 = te_falling.load();
+  delay(ms);
+  const uint32_t rises = te_rising.load() - r0, falls = te_falling.load() - f0;
+  Serial.printf("TE %s: %lu rising / %lu falling in %lu ms (%.1f Hz), line now %s\n", label,
+                static_cast<unsigned long>(rises), static_cast<unsigned long>(falls),
+                static_cast<unsigned long>(ms), rises * 1000.0 / ms, digitalRead(pins::kLcdTe) ? "HIGH" : "LOW");
+  return rises;
+}
+
 // ---------------------------------------------------------------- Battery
 
 float read_battery_v() {
@@ -433,6 +468,10 @@ void refresh_readings() {
   report_sht(sht_last);
   Serial.printf("BATT %.2f V\n", batt_last);
   Serial.printf("LOOP max gap %lu ms\n", static_cast<unsigned long>(loop_max_gap_ms));
+  static uint32_t te_last = 0;
+  const uint32_t te_now = te_rising.load();
+  Serial.printf("TE %lu pulses since last report\n", static_cast<unsigned long>(te_now - te_last));
+  te_last = te_now;
   loop_max_gap_ms = 0;
 }
 
@@ -474,12 +513,23 @@ void setup() {
 
   SPI.begin(pins::kLcdSclk, -1, pins::kLcdMosi, pins::kLcdCs);
   u8g2.setBusClock(kSpiClockHz);
+  te_begin();
+  te_measure("before init", 1000);
   u8g2.begin();
   Serial.println("PANEL init done (driver leaves HPM)");
+  te_measure("HPM after init", 2000);
 
   draw_test_card();
-  send_frame(kBootHpmHoldMs);
-  Serial.println("PANEL test card sent; LPM follows after the hold");
+  // Stay in HPM, measure, then drop to LPM and measure again.
+  u8g2.sendF("c", kCmdHpm);
+  u8g2.sendBuffer();
+  te_measure("HPM with frame", 2000);
+  u8g2.sendF("c", kCmdLpm);
+  te_measure("LPM", 5000);
+  u8g2.sendF("c", kCmdHpm);
+  te_measure("back to HPM", 2000);
+  u8g2.sendF("c", kCmdLpm);
+  Serial.println("PANEL test card sent; now in LPM");
   last_report_ms = millis();
 }
 

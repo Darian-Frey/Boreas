@@ -45,7 +45,7 @@ Effort vocabulary: trivial | small | medium | large.
 **Description.** Over 116 h of soak, 26 of 372 fetches (7 %) failed, all with HTTP 503 from Open-Meteo, and 21 of them at hh:00:15. None failed at the :30 slots. The service looks overloaded on the hour, when many clients poll. Retries (1, 2, 4 … min later) recovered every time, so the panel never went stale, but each failure costs a TLS handshake and a radio burst.
 **Proposal.** Change the slot offset from 15 s to a few minutes off the hour, e.g. 7 min 15 s (slots at :07:15 / :37:15, or :07:15 / :22:15 / … at 15 min). It's one constant; `test/test_app` slot expectations change accordingly.
 **Trade-offs.** Forecast data updates on Open-Meteo's own schedule, so a later poll loses nothing meaningful. Any fixed offset can still collide with other clients; a per-device random offset would spread better, but makes slots harder to reason about and to test.
-**Applied.** 2026-10-16: `kFetchSlotOffsetS` = 7 min 15 s (slots :07:15 / :37:15 at 30 min). `test/test_app` expectations moved, plus a property test that no slot falls in the first 5 minutes of an hour. To be confirmed by the fetch-failure breakdown of the next soak.
+**Applied.** 2026-10-16: `kFetchSlotOffsetS` = 7 min 15 s (slots :07:15 / :37:15 at 30 min). `test/test_app` expectations moved, plus a property test that no slot falls in the first 5 minutes of an hour. To be confirmed by the fetch-failure breakdown of the next soak. **Result (second soak):** not confirmed. The 503s moved with the slots (33 at :07, 41 at :37) and clustered on particular days (17–19 Oct), so they were Open-Meteo episodes, not top-of-the-hour load. The change is harmless and stays.
 
 ### IMP-002: Pin exact library versions after Phase 0
 **Status:** applied

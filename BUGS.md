@@ -16,10 +16,22 @@ Severity vocabulary: low | medium | high.
 **Severity:** high
 **Description.** The panel froze showing 22:07 while serial showed the firmware redrawing every minute (`redraw N`, ~21 ms sends) for 15+ minutes. The freeze followed the first forecast fetch of that boot (22:07:40), during a period of repeated Wi-Fi drops and reassociations. A reflash (ESP32 reset, U8g2 init sequence with the RST pulse) did **not** recover the panel; a full power-cycle (PWR off/on) did. A frozen panel shows confident, wrong data with no flag, which breaks the "never blank, failures flagged" invariant in spirit. The firmware can't see it: the panel interface is write-only (no MISO).
 **Recurrences.** It happened twice more during the first soak (2026-10-11 → 16), each time with the firmware still logging normally right up to the user's power-off: the screen went **blank** (power-cycled ~18:08 Mon 12 Oct) and later froze **half blank** (power-cycled ~12:00 Wed 14 Oct). That's three occurrences in about 120 h. The health log shows nothing unusual before either power-off: no reset, flat heap, Wi-Fi up. Blank and half-blank look like the controller resetting itself (it powers up blank and unconfigured, and the firmware only ever sends pixel data, never the setup again); half-blank would be a reset partway through a frame.
+**Second soak (2026-10-16 → 11-03, board on USB only, no 18650 fitted).** The screen went **blank** about six times (18, 19, 20, 25, 30 Oct, 3 Nov). Each time the user waited well past several 15-min D-019 re-inits and the panel **did not come back**; only removing power did. The health log shows the firmware running normally throughout each blank (ticks, fetches, no reset), so the ESP32 was fine. **D-019 does not recover this failure:** neither the RST pulse nor the full init sequence clears it, which points at something on the panel side that only a power loss resets (its booster or supply, rather than the controller's registers).
+**Detection now possible.** The panel's TE line (GPIO6) pulses at 1 Hz in LPM and ~33 Hz in HPM (bring-up test, 2026-11-08), so a dead panel should show as missing TE pulses. Plan: a TE monitor in the firmware that logs `panel_lost` with a timestamp and tries recovery, giving the exact time and context of each failure.
+**Suspect: supply.** With no 18650 fitted, every Wi-Fi TX burst is drawn straight from USB through the power path. Next soak: cell fitted *and* USB connected, so the cell buffers the bursts; one variable changed.
 **Mitigation.** 2026-10-16: D-019 re-initialises the panel controller every 15 min (`St7305Panel::reinit()`), so a self-reset controller recovers without a power-cycle. Root cause still unknown; stays open until a 72 h soak runs without a stuck panel.
 **Reproduction.** Not reproducible on demand: roughly one occurrence per ~40 h of running. Conditions at the first: TF card mounted with health-log writes every 60 s (test interval), Wi-Fi reconnecting every ~25-35 s, first TLS fetch just completed.
 **Notes.** Hypothesis (unconfirmed): a supply dip with Wi-Fi TX, SD write and panel refresh coinciding latched the panel's internal booster or controller into a state only a power loss clears. Next steps: (1) check the Waveshare schematic and ST7305 datasheet for a panel power-enable or a readable status; (2) watch for recurrence during the 72 h soak (the user glances at the panel clock; the health log gives what the board was doing at that time); (3) if it recurs, test with the SD log disabled to rule the card in or out. Related: AV-006, AV-010.
 
+
+### BUG-005: `sdlog.py` gets no reply to its first `dump` after the board is plugged in
+**Status:** open
+**Found:** 2026-11-08 (pulling the second soak's log)
+**Location:** `tools/sdlog.py`, `App::service_serial()`
+**Severity:** low
+**Description.** The first run after plugging the board into the laptop (the board had been running ~10 min) reported "no BEGIN from the board". A second run straight afterwards worked. The `dump` line sent immediately after opening the port seems to be lost on the first open, perhaps because the USB CDC host-connected state isn't settled yet.
+**Reproduction.** Plug the board in, run `tools/sdlog.py` once.
+**Notes.** Likely fix: re-send `dump` every few seconds until `BEGIN` arrives, within the overall timeout. Workaround: run it again.
 
 ## Fixed
 
