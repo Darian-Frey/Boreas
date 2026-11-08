@@ -42,6 +42,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com). Reference F-, D-,
 - IMP-004 applied: Wi-Fi attempts end as soon as the driver reports a disconnect (event callback into atomics), not after the 15 s timeout; status-change log on serial. After a reset Wi-Fi is up at ~8 s instead of ~21 s.
 - IMP-001 applied with U8g2 built-ins: `VCR_OSD` header clock, spleen labels, footer and readouts, logisoso numerals kept. New `kUnit` font role for the outdoor `C`. Preview font sheets (`fonts-hero`, `fonts-label`, `vcr-fit`). Reference image regenerated (`d09885fa`).
 - Second soak analysed (118.7 h `PASS` on stability); BUG-004 recurred ~6 times and D-019 did not recover it. Panel TE line verified as a heartbeat (1 Hz LPM / ~33 Hz HPM); bring-up test measures it. IMP-005 found not to change Open-Meteo 503s. BUG-005 (`sdlog.py` first dump unanswered).
+- D-020 (supersedes D-019): TE heartbeat monitor re-initialises the panel only when its TE pulses stop, logging `panel_lost` / `panel_reinit` / `panel_back`. Task watchdog (60 s, `TASK_WDT`). Health log gains Wi-Fi `wifi_down` / `wifi_fail` / `wifi_up` events and `te=`/`rssi=` in tick notes. Serial `wdt-test` and `panel-test` commands, both verified on the board. `soak.py` reports panel and Wi-Fi events.
 - `include/locations.example.h`: forecast location template. The real location lives in the git-ignored `include/locations.h`.
 ### Changed
 - Project retargeted from Raspberry Pi Zero WH + Inky pHAT to the Waveshare ESP32-S3-RLCD-4.2 (D-001).

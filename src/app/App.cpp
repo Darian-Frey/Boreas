@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <esp_system.h>
+#include <esp_task_wdt.h>
 #include <sys/time.h>
 
 #include <cstdio>
@@ -83,7 +84,7 @@ void App::begin() {
   state_.show_seconds = false;  // BOREAS_SECONDS_CLOCK build (D-008) not implemented yet
   wifi_.begin(secrets::kWifiSsid, secrets::kWifiPassword);
   panel_.begin();
-  last_panel_init_ms_ = millis();
+  te_seen_ms_ = millis();
 
   // D-016 proof: the board must hash this scene exactly as the host preview does.
   {
@@ -96,6 +97,15 @@ void App::begin() {
   // After the first redraw so the sensor columns are filled in.
   log_health("boot", reset_reason_name(esp_reset_reason()));
   last_health_ms_ = millis();
+
+  // Watchdog: a hung loop resets the chip with TASK_WDT instead of failing
+  // silently. Arduino feeds it once per loop() pass once enabled.
+  esp_task_wdt_config_t wdt = {};
+  wdt.timeout_ms = config::kWatchdogTimeoutS * 1000;
+  wdt.idle_core_mask = 1 << 0;  // keep watching CPU0's idle task, as the core default does
+  wdt.trigger_panic = true;
+  esp_task_wdt_reconfigure(&wdt);
+  enableLoopWDT();
 }
 
 void App::loop() {
@@ -114,6 +124,7 @@ void App::loop() {
                                                                 : Link::kDown;
   if (state_.link != link_before)
     Serial.printf("link %d -> %d\n", static_cast<int>(link_before), static_cast<int>(state_.link));
+  service_wifi_log(link_before, now_ms);
 
   const bool fetched = service_fetch(time(nullptr));
 
@@ -123,9 +134,16 @@ void App::loop() {
   const int64_t minute = current_minute();
   if (schedule::redraw_due(minute, last_minute_, dirty)) redraw();
 
+  service_panel(millis());
+
   if (now_ms - last_health_ms_ >= config::kHealthLogIntervalS * 1000UL) {
     last_health_ms_ = now_ms;
-    log_health("tick", "");
+    const uint32_t te = panel_.te_pulses();
+    char note[40];
+    snprintf(note, sizeof(note), "te=%lu rssi=%d", static_cast<unsigned long>(te - te_at_last_tick_),
+             static_cast<int>(wifi_.last_rssi()));
+    te_at_last_tick_ = te;
+    log_health("tick", note);
   }
 
   delay(10);
@@ -190,16 +208,6 @@ void App::update_state(time_t now) {
 }
 
 void App::redraw() {
-  // Self-heal (D-019): re-initialise the controller before drawing, so the
-  // fresh frame goes straight onto a known-good panel.
-  const uint32_t now_ms = millis();
-  if (now_ms - last_panel_init_ms_ >= config::kPanelReinitIntervalS * 1000UL) {
-    const uint32_t took = panel_.reinit();
-    last_panel_init_ms_ = now_ms;
-    ++panel_reinits_;
-    Serial.printf("panel reinit %lu: %lu ms\n", static_cast<unsigned long>(panel_reinits_),
-                  static_cast<unsigned long>(took));
-  }
   ++redraw_count_;
   last_minute_ = current_minute();
   read_sensors();
@@ -224,6 +232,71 @@ void App::redraw() {
                 static_cast<double>(state_.battery.volts), state_.rtc_ok ? "OK" : "UNSET", d.condition,
                 d.is_night ? "night" : "day", d.stale, trend_name(d.pressure_trend), d.max_prob_12h, d.umbrella,
                 static_cast<unsigned long>(ESP.getFreeHeap()));
+}
+
+// Panel heartbeat (D-020, BUG-004). TE pulses at >= 1 Hz while the panel is
+// alive. If none arrive for kPanelTeTimeoutMs the panel is logged as lost and
+// re-initialised, again every kPanelRecoverIntervalS while it stays silent;
+// when pulses return the recovery is logged with how long it took.
+void App::service_panel(uint32_t now_ms) {
+  const uint32_t te = panel_.te_pulses();
+  char note[48];
+  if (te != te_seen_) {
+    te_seen_ = te;
+    te_seen_ms_ = now_ms;
+    if (panel_lost_) {
+      panel_lost_ = false;
+      snprintf(note, sizeof(note), "after=%lus reinits=%lu", static_cast<unsigned long>((now_ms - panel_lost_ms_) / 1000),
+               static_cast<unsigned long>(panel_recover_tries_));
+      log_health("panel_back", note);
+    }
+    return;
+  }
+  if (now_ms - te_seen_ms_ < config::kPanelTeTimeoutMs) return;
+
+  if (!panel_lost_) {
+    panel_lost_ = true;
+    panel_lost_ms_ = now_ms;
+    panel_recover_tries_ = 0;
+    snprintf(note, sizeof(note), "no TE for %lus", static_cast<unsigned long>((now_ms - te_seen_ms_) / 1000));
+    log_health("panel_lost", note);
+  }
+  if (panel_recover_tries_ == 0 || now_ms - panel_recover_ms_ >= config::kPanelRecoverIntervalS * 1000UL) {
+    ++panel_recover_tries_;
+    panel_recover_ms_ = now_ms;
+    const uint32_t took = panel_.reinit();
+    redraw();  // put a frame straight back on the re-initialised panel
+    snprintf(note, sizeof(note), "try=%lu took=%lums", static_cast<unsigned long>(panel_recover_tries_),
+             static_cast<unsigned long>(took));
+    log_health("panel_reinit", note);
+  }
+}
+
+// Wi-Fi diagnostics for the health log: every drop with its reason and the
+// last signal strength, every failed reconnect attempt with its reason (0 =
+// timed out), and every recovery with the outage length.
+void App::service_wifi_log(Link link_before, uint32_t now_ms) {
+  char note[48];
+  const bool up = state_.link == Link::kUp, was_up = link_before == Link::kUp;
+  if (was_up && !up) {
+    wifi_down_ms_ = now_ms;
+    wifi_fails_at_down_ = wifi_.failed_attempts();
+    snprintf(note, sizeof(note), "reason=%u rssi=%d", static_cast<unsigned>(wifi_.last_drop_reason()),
+             static_cast<int>(wifi_.last_rssi()));
+    log_health("wifi_down", note);
+  }
+  if (wifi_.failed_attempts() != wifi_fails_seen_) {
+    wifi_fails_seen_ = wifi_.failed_attempts();
+    snprintf(note, sizeof(note), "reason=%u", static_cast<unsigned>(wifi_.last_fail_reason()));
+    log_health("wifi_fail", note);
+  }
+  if (!was_up && up && wifi_down_ms_ != 0) {
+    snprintf(note, sizeof(note), "after=%lus attempts=%lu",
+             static_cast<unsigned long>((now_ms - wifi_down_ms_) / 1000),
+             static_cast<unsigned long>(wifi_.failed_attempts() - wifi_fails_at_down_ + 1));
+    log_health("wifi_up", note);
+    wifi_down_ms_ = 0;
+  }
 }
 
 // One CSV line to the TF card (SPEC.md §Health log) and serial. Not in the
@@ -255,6 +328,8 @@ void App::log_health(const char* event, const char* note) {
 
 // Serial commands (newline-terminated). `dump`: stream the health log as
 //   BEGIN <path> <size>\n<file bytes>\nEND <bytes sent>\n
+// `wdt-test`: hang loop() so the watchdog resets the chip.
+// `panel-test`: put the panel to sleep so the TE monitor must recover it.
 // tools/sdlog.py drives this. While dumping, writes wait for the host
 // instead of being dropped (AV-011 drops them only when nobody is reading).
 void App::service_serial() {
@@ -267,11 +342,27 @@ void App::service_serial() {
     }
     cmd_[cmd_len_] = '\0';
     const bool is_dump = std::strcmp(cmd_, "dump") == 0;
+    const bool is_wdt_test = std::strcmp(cmd_, "wdt-test") == 0;
+    const bool is_panel_test = std::strcmp(cmd_, "panel-test") == 0;
     const bool had_cmd = cmd_len_ > 0;
     cmd_len_ = 0;
     if (!had_cmd) continue;
+    if (is_wdt_test) {
+      // Proves the watchdog: hang loop() until it resets the chip (TASK_WDT).
+      Serial.printf("wdt-test: hanging loop(); expect a TASK_WDT reset in %lu s\n",
+                    static_cast<unsigned long>(config::kWatchdogTimeoutS));
+      Serial.flush();
+      for (;;) delay(100);
+    }
+    if (is_panel_test) {
+      // Proves the D-020 monitor: silence the panel; expect panel_lost, a
+      // re-init and panel_back in the health log within ~6 s.
+      Serial.println("panel-test: putting the panel to sleep");
+      panel_.sleep_for_test();
+      continue;
+    }
     if (!is_dump) {
-      Serial.printf("unknown command: %s (try: dump)\n", cmd_);
+      Serial.printf("unknown command: %s (try: dump, wdt-test, panel-test)\n", cmd_);
       continue;
     }
     Serial.setTxTimeoutMs(500);

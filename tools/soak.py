@@ -125,6 +125,29 @@ def main():
                 minutes[m] = minutes.get(m, 0) + 1
         print("  by minute past the hour: " + ", ".join(f"{k} x{v}" for k, v in sorted(minutes.items())))
 
+    # Panel heartbeat (D-020): every loss, its re-inits and whether it came back.
+    panel = [r for r in rows if r["event"] in ("panel_lost", "panel_reinit", "panel_back")]
+    lost = [r for r in panel if r["event"] == "panel_lost"]
+    if lost:
+        print(f"panel lost {len(lost)} time(s):")
+        for r in panel:
+            print(f"  {r['when']}  {r['event']:<12} {r['note']}")
+    else:
+        print("panel lost: never (TE heartbeat steady)")
+
+    # Wi-Fi outages: drops with reason, failed attempts, recoveries.
+    downs = [r for r in rows if r["event"] == "wifi_down"]
+    ups = [r for r in rows if r["event"] == "wifi_up"]
+    fails = [r for r in rows if r["event"] == "wifi_fail"]
+    if downs or fails:
+        reasons = {}
+        for r in downs:
+            reasons[r["note"].split()[0]] = reasons.get(r["note"].split()[0], 0) + 1
+        longest = max((int(r["note"].split("after=")[1].split("s")[0]) for r in ups if "after=" in r["note"]),
+                      default=0)
+        print(f"wifi: {len(downs)} drops ({', '.join(f'{k} x{v}' for k, v in reasons.items()) or '-'}), "
+              f"{len(fails)} failed attempts, longest outage {longest // 60} min {longest % 60} s")
+
     healthy = not unexpected and worst_slope > -args.max_heap_drop
     long_enough = longest_h >= args.min_hours
     print(f"longest uninterrupted run {longest_h:.1f} h (target {args.min_hours:.0f} h)")

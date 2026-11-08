@@ -3,6 +3,8 @@
 #include <Arduino.h>
 #include <SPI.h>
 
+#include <atomic>
+
 #include "pins.h"
 
 namespace {
@@ -14,6 +16,11 @@ constexpr uint32_t kHpmHoldMs = 100;
 constexpr uint8_t kCmdHighPowerMode = 0x38;
 constexpr uint8_t kCmdLowPowerMode = 0x39;
 
+// Counted in an interrupt from the panel's TE line (D-020).
+std::atomic<uint32_t> g_te_pulses{0};
+
+void IRAM_ATTR on_te_rising() { g_te_pulses.fetch_add(1, std::memory_order_relaxed); }
+
 // Full-buffer constructor: the 15 000-byte buffer is static inside U8g2,
 // so nothing here allocates on the heap (AV-002).
 U8G2_ST7305_300X400_F_4W_HW_SPI u8g2(U8G2_R1, pins::kLcdCs, pins::kLcdDc, pins::kLcdRst);
@@ -21,6 +28,8 @@ U8G2_ST7305_300X400_F_4W_HW_SPI u8g2(U8G2_R1, pins::kLcdCs, pins::kLcdDc, pins::
 }  // namespace
 
 void St7305Panel::begin() {
+  pinMode(pins::kLcdTe, INPUT);
+  attachInterrupt(digitalPinToInterrupt(pins::kLcdTe), on_te_rising, RISING);
   // Must precede u8g2.begin(): the constructor pins alone don't route SPI
   // on this core (CLAUDE.md §Pitfalls).
   SPI.begin(pins::kLcdSclk, -1, pins::kLcdMosi, pins::kLcdCs);
@@ -40,6 +49,13 @@ uint32_t St7305Panel::reinit() {
 }
 
 U8G2& St7305Panel::canvas() { return u8g2; }
+
+void St7305Panel::sleep_for_test() {
+  u8g2.sendF("c", 0x28);  // display off
+  u8g2.sendF("c", 0x10);  // sleep in
+}
+
+uint32_t St7305Panel::te_pulses() const { return g_te_pulses.load(std::memory_order_relaxed); }
 
 u8g2_t* St7305Panel::raw() { return u8g2.getU8g2(); }
 

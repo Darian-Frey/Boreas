@@ -82,7 +82,9 @@ Write sequence (`St7305Panel::end_frame()`): `sendF("c", 0x38)` → `sendBuffer(
 
 The panel **does not retain an image without power** (D-001 consequences; AV-006).
 
-**Self-heal (D-019, BUG-004):** every 15 min (`config::kPanelReinitIntervalS`), just before a redraw, `St7305Panel::reinit()` re-runs U8g2's start-up (RST pulse + init sequence, 140 ms measured), then the frame is drawn and sent as usual.
+**Heartbeat (D-020, BUG-004):** `St7305Panel` counts rising edges on TE (GPIO6) in an interrupt: 1 Hz in LPM, ~33 Hz in HPM. If none arrive for 5 s (`config::kPanelTeTimeoutMs`), `App` logs `panel_lost`, runs `St7305Panel::reinit()` (RST pulse + init sequence, 140 ms) and redraws, repeating every 15 min (`kPanelRecoverIntervalS`) until pulses return, then logs `panel_back`. D-019's blind 15-min re-init is gone.
+
+**Watchdog:** the loop task is on the ESP-IDF task watchdog with a 60 s timeout (`config::kWatchdogTimeoutS`; the longest legitimate pass is a fetch, ~30 s worst case). A hung loop resets the chip with reason `TASK_WDT`, recorded by the next boot line. Verified 2026-11-08 with the `wdt-test` serial command.
 
 ## Layout (400×300, `ui/grid.h`)
 
@@ -332,10 +334,18 @@ Columns: `utc,local,uptime_s,event,free_heap,min_free_heap,max_block,fetch_ok,fe
 | Event | When | `note` |
 |---|---|---|
 | `boot` | after the first redraw | reset reason (`POWERON`, `USB`, `SW`, `PANIC`, `TASK_WDT`, `BROWNOUT`, …) |
-| `tick` | every 10 min (`config::kHealthLogIntervalS`) | — |
+| `tick` | every 10 min (`config::kHealthLogIntervalS`) | `te=N rssi=X`: TE pulses in the last 10 min (≈ 600 + redraw bursts when healthy) and the last RSSI |
 | `fetch_fail` | each failed fetch | the error, commas replaced by `;` |
+| `panel_lost` | TE silent for 5 s (D-020) | `no TE for Ns` |
+| `panel_reinit` | each recovery re-init while lost (immediately, then every 15 min) | `try=N took=Nms` |
+| `panel_back` | TE pulses resume | `after=Ns reinits=N` |
+| `wifi_down` | link lost | `reason=R rssi=X` (ESP-IDF disconnect reason; last RSSI while connected) |
+| `wifi_fail` | a reconnect attempt failed | `reason=R` (0 = timed out with no driver report) |
+| `wifi_up` | link back after a drop | `after=Ns attempts=N` |
 
 `utc` is 0 and `local` is `-` until the clock is trusted (e.g. after a power-on with no RTC backup cell, until NTP).
+
+Serial commands (newline-terminated): `dump` (below), `wdt-test` (hangs the loop so the watchdog resets the chip) and `panel-test` (puts the panel to sleep so the heartbeat monitor must recover it). The two test commands are for verifying the safety nets on the bench.
 
 Reading it without removing the card: send `dump` + newline on the USB serial port; the firmware replies `BEGIN <path> <size>`, the file bytes, then `END <bytes sent>`, and waits for the host while dumping (AV-011 drop mode is suspended). `tools/sdlog.py` does this and checks the byte count. Open the port with default DTR/RTS: forcing them low before opening resets the board. Counters reset at each boot. About 45 KB per 72 h. `tools/soak.py` summarises a log: boots with reset reasons (times estimated for untimed boots), and per boot session the length, free-heap trend, minimum free heap, smallest largest-block, fetch success, reconnects and NTP syncs; plus fetch failures by reason and minute past the hour. `PASS`; `FAIL` on an unexpected reset or a heap fall over 2 KB/day; `INCOMPLETE` if healthy but no run reached 72 h.
 

@@ -78,9 +78,13 @@ void WiFiMgr::service(uint32_t now_ms) {
                       static_cast<unsigned long>(now_ms - state_since_ms_),
                       static_cast<unsigned>(g_last_reason.load()));
         first_attempt_ = false;
+        ++failed_attempts_;
+        last_fail_reason_ = g_last_reason.load();
         fail_attempt(now_ms);
       } else if (now_ms - state_since_ms_ >= config::kWifiConnectTimeoutMs) {
         first_attempt_ = false;
+        ++failed_attempts_;
+        last_fail_reason_ = 0;  // timed out without a driver report
         fail_attempt(now_ms);
       }
       break;
@@ -88,7 +92,11 @@ void WiFiMgr::service(uint32_t now_ms) {
     case State::kConnected:
       if (!link_up) {
         ++reconnects_;
+        last_drop_reason_ = g_last_reason.load();
         fail_attempt(now_ms);
+      } else if (last_rssi_ms_ == 0 || now_ms - last_rssi_ms_ >= 10000) {
+        last_rssi_ = static_cast<int8_t>(WiFi.RSSI());
+        last_rssi_ms_ = now_ms;
       }
       break;
     case State::kWaiting:

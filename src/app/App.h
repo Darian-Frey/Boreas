@@ -35,6 +35,8 @@ class App {
   int64_t current_minute() const;
   void log_health(const char* event, const char* note);
   void service_serial();
+  void service_panel(uint32_t now_ms);
+  void service_wifi_log(Link link_before, uint32_t now_ms);
 
   // Modules
   St7305Panel panel_;
@@ -60,8 +62,18 @@ class App {
   uint32_t fetch_ok_ = 0;
   uint32_t fetch_fail_ = 0;
   uint32_t last_health_ms_ = 0;
-  uint32_t last_panel_init_ms_ = 0;
-  uint32_t panel_reinits_ = 0;
+  // Panel heartbeat (D-020)
+  uint32_t te_seen_ = 0;           // TE count last time it moved
+  uint32_t te_seen_ms_ = 0;        // when it last moved
+  bool panel_lost_ = false;
+  uint32_t panel_lost_ms_ = 0;
+  uint32_t panel_recover_ms_ = 0;  // last recovery re-init
+  uint32_t panel_recover_tries_ = 0;
+  uint32_t te_at_last_tick_ = 0;
+  // Wi-Fi diagnostics for the health log
+  uint32_t wifi_down_ms_ = 0;
+  uint32_t wifi_fails_seen_ = 0;
+  uint32_t wifi_fails_at_down_ = 0;
   uint32_t redraw_count_ = 0;
   int64_t last_minute_ = -1;
   char cmd_[16] = "";  // serial command being typed

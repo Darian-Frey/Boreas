@@ -13,7 +13,7 @@ constexpr int8_t kLcdMosi = 12;
 constexpr int8_t kLcdDc = 5;
 constexpr int8_t kLcdCs = 40;
 constexpr int8_t kLcdRst = 41;
-constexpr int8_t kLcdTe = 6;  // tearing-effect output; unused
+constexpr int8_t kLcdTe = 6;  // tearing-effect output: the panel heartbeat (D-020)
 
 // Shared I2C bus: PCF85063 RTC (0x51), SHTC3 (0x70). Also on header P1-14/16.
 constexpr int8_t kI2cSda = 13;

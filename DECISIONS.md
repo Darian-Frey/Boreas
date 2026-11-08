@@ -338,7 +338,7 @@ Status vocabulary: Proposed | Accepted | Superseded by D-NNN | Deprecated.
 ### D-019 Re-initialise the panel controller every 15 minutes (self-heal)
 **Decided:** 2026-10-16
 **Recorded:** 2026-10-16
-**Status:** Accepted
+**Status:** Superseded by D-020
 **Authors:** Shane Hartley (options proposed by Claude)
 **Related:** BUG-004, D-006, AV-006
 
@@ -359,4 +359,28 @@ Status vocabulary: Proposed | Accepted | Superseded by D-NNN | Deprecated.
 - U8g2's init sequence itself sends `0x38` (HPM); `end_frame()` remains the only place *our* code sends `0x38`/`0x39`.
 
 **Reversal conditions.** If the flicker is objectionable, try B. If freezes continue despite A, pursue D and revisit.
+
+### D-020 Watch the panel's TE heartbeat; re-initialise only when it stops
+**Decided:** 2026-11-08
+**Recorded:** 2026-11-08
+**Status:** Accepted
+**Authors:** Shane Hartley (proposed by Claude)
+**Related:** D-019 (supersedes), BUG-004, AV-006
+
+**Context.** D-019's blind re-init every 15 min did not recover a single one of the ~6 blank screens in the second soak, and the firmware could not tell when the panel had died: the SPI link is write-only. The bring-up test then showed the panel's TE line (GPIO6) pulses at 1.0 Hz in LPM and ~33 Hz in HPM, and is silent before initialisation.
+
+**Options.**
+- **A. Keep D-019.** Proven not to recover the failure, and blind.
+- **B. TE heartbeat:** count TE pulses in an interrupt; if none arrive for 5 s, log `panel_lost`, re-initialise, and repeat the re-init every 15 min until pulses return, logging `panel_back` with the time taken. Chosen.
+- **C. B plus a self power-cycle.** Not possible yet: no known GPIO controls the panel's or the board's power.
+
+**Decision.** Option B (`config::kPanelTeTimeoutMs`, `kPanelRecoverIntervalS`; `App::service_panel`). The periodic D-019 re-init is removed; `St7305Panel::reinit()` stays as the recovery action.
+
+**Consequences.**
+- Every panel failure that stops TE is timestamped in the health log, with what the board was doing around it, which D-019 could never provide.
+- A failure that a re-init can clear recovers within ~5 s instead of up to 15 min. Proven with the `panel-test` serial command (sleep-in → `panel_lost` → re-init → `panel_back` in 0 s).
+- A failure that a re-init can't clear (the BUG-004 kind so far) still needs a power-cycle, but now leaves `panel_lost` plus a `panel_reinit` every 15 min in the log.
+- A failure that keeps TE running (frozen image with a live controller) is not detected. Whether that ever happens is itself something the log will show.
+
+**Reversal conditions.** If TE turns out to keep pulsing while the panel is blank, or to drop out on a healthy panel, revise the detection.
 

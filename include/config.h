@@ -52,10 +52,19 @@ constexpr uint32_t kHttpConnectTimeoutMs = 10000;
 constexpr uint16_t kHttpReadTimeoutMs = 10000;
 constexpr uint32_t kTlsHandshakeTimeoutS = 10;
 
-// ---- Panel self-heal (D-019, BUG-004)
-// Re-run the panel controller's full start-up this often, just before a
-// redraw, so a controller that reset itself (blank or half-blank) recovers.
-constexpr uint32_t kPanelReinitIntervalS = 15 * 60;
+// ---- Panel heartbeat (D-020, BUG-004)
+// The panel's TE line pulses at 1 Hz in LPM and ~33 Hz in HPM. No pulse for
+// this long means the panel has died: log it and try a re-init, repeating
+// the re-init at the interval below until pulses return.
+constexpr uint32_t kPanelTeTimeoutMs = 5000;
+constexpr uint32_t kPanelRecoverIntervalS = 15 * 60;
+
+// ---- Watchdog
+// The loop task is fed once per loop() pass. The longest legitimate pass is
+// a forecast fetch (10 s connect + 10 s TLS + 10 s read, plus DNS), so the
+// timeout sits well above that. On expiry the chip resets with TASK_WDT,
+// which the health log's boot line records.
+constexpr uint32_t kWatchdogTimeoutS = 60;
 
 // ---- Health log on the TF card (SPEC.md §Health log, AV-002)
 constexpr const char* kHealthLogPath = "/boreas/health.csv";

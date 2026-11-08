@@ -35,6 +35,15 @@ class St7305Panel {
   // return; safe to sleep straight after.
   void end_frame();
 
+  // Test hook for the D-020 monitor: display off (0x28) and sleep in (0x10),
+  // which stops the panel's refresh and its TE pulses, imitating a dead
+  // panel. reinit() brings it back.
+  void sleep_for_test();
+
+  // TE (tearing-effect) pulses counted since begin(): ~1 Hz in LPM, ~33 Hz
+  // in HPM while the panel is alive; none once it has died (D-020).
+  uint32_t te_pulses() const;
+
   // Duration of the last sendBuffer() in microseconds (Diag page).
   uint32_t last_send_us() const { return last_send_us_; }
 

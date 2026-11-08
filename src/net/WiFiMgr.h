@@ -27,6 +27,13 @@ class WiFiMgr {
   uint32_t retry_in_ms(uint32_t now_ms) const;  // 0 unless waiting
   uint32_t reconnects() const { return reconnects_; }
 
+  // Diagnostics for the health log. Reasons are ESP-IDF wifi_err_reason_t
+  // codes; 0 means the attempt timed out with no driver report.
+  uint32_t failed_attempts() const { return failed_attempts_; }
+  uint8_t last_fail_reason() const { return last_fail_reason_; }
+  uint8_t last_drop_reason() const { return last_drop_reason_; }
+  int8_t last_rssi() const { return last_rssi_; }  // last reading while connected
+
  private:
   void start_attempt(uint32_t now_ms);
   void fail_attempt(uint32_t now_ms);
@@ -40,5 +47,10 @@ class WiFiMgr {
   int last_status_ = -1;          // WiFi.status() last seen, for the change log
   uint32_t disconnects_at_start_ = 0;  // driver disconnect events when this attempt began
   bool first_attempt_ = true;     // the core retries its very first failure once by itself
+  uint32_t failed_attempts_ = 0;
+  uint8_t last_fail_reason_ = 0;
+  uint8_t last_drop_reason_ = 0;
+  int8_t last_rssi_ = 0;
+  uint32_t last_rssi_ms_ = 0;
   Backoff backoff_{0, 0};
 };
